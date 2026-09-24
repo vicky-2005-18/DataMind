@@ -24,6 +24,7 @@ from datamind.contracts import (
     MetricRecord,
     MetricScope,
     ModelingView,
+    PermutationImportanceRecord,
     PreprocessingConfig,
     ServiceError,
     SplitManifest,
@@ -82,6 +83,67 @@ def _get_primary_cv_std(metrics: List[MetricRecord], primary_metric: str) -> Opt
             except Exception:
                 return None
     return None
+
+
+def compute_permutation_importance(
+    pipeline: Any,
+    X_dev: pd.DataFrame,
+    y_dev: pd.Series,
+    feature_names: List[str],
+    task: TaskType,
+    seed: int = 42,
+    n_repeats: int = 5,
+    max_features: int = 50,
+    sample_rows: int = 500,
+) -> List[Any]:
+    """
+    Compute permutation importance on development rows as a development-set
+    diagnostic (ML_SPEC §7).
+
+    Uses the full fitted pipeline so importances correspond to original input
+    columns. This is not independent evaluation and is not causal evidence.
+    Negative values are legitimate.
+
+    Bounded by: seed 42, 5 repeats, at most 50 features, seeded sample of 500 rows.
+    """
+    from sklearn.inspection import permutation_importance
+
+    if not feature_names or len(feature_names) > max_features:
+        raise ServiceError(
+            ErrorCode.INVALID_MODEL_CONFIG,
+            f"Permutation importance supports between 1 and {max_features} original features; this model has {len(feature_names)}.",
+        )
+
+    n_rows = len(X_dev)
+    if n_rows > sample_rows:
+        rng = np.random.default_rng(seed)
+        sample_idx = np.sort(rng.choice(n_rows, size=sample_rows, replace=False))
+        X_sample = X_dev.iloc[sample_idx].copy()
+        y_sample = y_dev.iloc[sample_idx].copy()
+    else:
+        X_sample = X_dev.copy()
+        y_sample = y_dev.copy()
+
+    scorer = "f1_macro" if task == TaskType.CLASSIFICATION else "neg_root_mean_squared_error"
+    result = permutation_importance(
+        pipeline,
+        X_sample[feature_names],
+        y_sample,
+        n_repeats=n_repeats,
+        random_state=seed,
+        scoring=scorer,
+    )
+
+    return [
+        PermutationImportanceRecord(
+            feature=feature,
+            mean_importance=float(result["importances_mean"][index]),
+            std_importance=float(result["importances_std"][index]),
+            n_repeats=n_repeats,
+            n_samples=len(X_sample),
+        )
+        for index, feature in enumerate(feature_names)
+    ]
 
 
 def _compute_fold_metrics(
@@ -384,6 +446,12 @@ def run_experiment(
         "dataset_id": dataset_id,
         "view_fingerprint": view.view_fingerprint,
         "split_fingerprint": manifest.split_fingerprint,
+        "task": view.task.value,
+        "target": view.target,
+        "numeric_features": view.numeric_features,
+        "categorical_features": view.categorical_features,
+        "cleaning_log": view.cleaning_log,
+        "row_policy": view.row_policy.model_dump(),
         "algorithm_configs": [a.model_dump() for a in algorithm_configs],
         "prep_config": prep_config.model_dump(),
         "seed": seed,

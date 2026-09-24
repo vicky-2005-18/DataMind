@@ -336,6 +336,41 @@ class PredictionBatch(BaseModel):
     warnings: List[str] = Field(default_factory=list)
 
 
+class ClusteringResult(BaseModel):
+    """Persisted K-Means result and diagnostic artifact references."""
+
+    experiment: ExperimentSummary
+    feature_names: List[str]
+    cluster_labels: List[int]
+    cluster_sizes: Dict[int, int]
+    inertia: float
+    silhouette: Optional[float] = None
+    silhouette_reason: Optional[str] = None
+    silhouette_sample_size: int
+    pca_coordinates: List[List[float]]
+    pca_explained_variance: List[float]
+    elbow_points: List[Dict[str, float]]
+    artifact_paths: Dict[str, str]
+    warnings: List[str] = Field(default_factory=list)
+
+
+class PlaygroundResult(BaseModel):
+    """Real fitted output for an educational synthetic playground."""
+
+    kind: str
+    seed: int
+    parameters: Dict[str, Any]
+    points: List[List[float]]
+    labels: List[Any]
+    mesh_x: Optional[List[List[float]]] = None
+    mesh_y: Optional[List[List[float]]] = None
+    mesh_values: Optional[List[List[float]]] = None
+    curve_x: Optional[List[float]] = None
+    curve_y: Optional[List[float]] = None
+    explanation: str
+    limitation: str
+
+
 class ComparisonResult(BaseModel):
     """Outcome of comparing multiple experiments for leaderboard compatibility."""
 
@@ -356,3 +391,37 @@ class InputFeatureSchema(BaseModel):
     expected_dtypes: Dict[str, str] = Field(default_factory=dict)
 
 
+class PermutationImportanceRecord(BaseModel):
+    """Bounded permutation importance record for one original input feature.
+
+    Values represent the mean decrease in primary CV metric when the feature
+    is permuted. Computed on development rows only as a diagnostic.
+    """
+
+    feature: str
+    mean_importance: float
+    std_importance: float
+    n_repeats: int
+    n_samples: int
+
+
+class ExportManifest(BaseModel):
+    """Manifest of files in a ZIP bundle with checksums and origins."""
+
+    experiment_id: str
+    generated_at: str
+    files: Dict[str, Dict[str, str]] = Field(default_factory=dict)
+    raw_training_data_included: bool = False
+
+
+class ExperimentReportConfig(BaseModel):
+    """Configuration for generating experiment reports."""
+
+    include_permutation_importance: bool = True
+    include_holdout_evaluation: bool = True
+    include_cv_details: bool = True
+    include_environment: bool = True
+    include_failures: bool = True
+    include_exposure_flags: bool = True
+    include_artifact_hashes: bool = True
+    include_raw_training_data: bool = False  # Excluded by default per DATA_CONTRACTS

@@ -61,3 +61,24 @@ def test_experiments_page_render(tmp_storage_dir: Path) -> None:
     assert any("Supervised Experiments" in str(title.value) for title in at.title)
 
 
+def test_home_shows_workspace_onboarding(tmp_storage_dir: Path) -> None:
+    """Verify that the empty workspace shows truthful next-step guidance."""
+    app_path = Path(__file__).parent.parent.parent / "app.py"
+    at = AppTest.from_file(str(app_path), default_timeout=15.0).run()
+
+    assert not at.exception
+    assert any("From raw data to defensible results" in str(item.value) for item in at.subheader)
+    assert any("Create or select a project" in str(item.value) for item in at.info)
+
+
+def test_dataset_workspace_empty_state(tmp_storage_dir: Path) -> None:
+    """Verify that the dataset page keeps project prerequisite guidance visible."""
+    app_path = Path(__file__).parent.parent.parent / "app.py"
+    at = AppTest.from_file(str(app_path), default_timeout=15.0).run()
+
+    at.radio[0].set_value("Datasets").run()
+
+    assert not at.exception
+    assert any("No Active Project Selected" in str(item.value) for item in at.warning)
+
+

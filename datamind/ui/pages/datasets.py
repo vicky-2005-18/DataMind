@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from datamind.config import get_settings
 from datamind.contracts import DatasetSummary, DemoDatasetKind, ServiceError
 from datamind.services.datasets import DatasetService
 from datamind.ui.components import (
@@ -28,6 +29,34 @@ def render_datasets_page() -> None:
         return
 
     service = DatasetService()
+    settings = get_settings()
+    project_datasets = service.list_datasets(active_project.id)
+
+    if project_datasets:
+        current_active_id = st.session_state.get("active_dataset_id")
+        ds_dict = {
+            dataset.id: (
+                f"{dataset.display_name} · {dataset.row_count:,} rows · "
+                f"{dataset.column_count} columns"
+            )
+            for dataset in project_datasets
+        }
+        selected_idx = (
+            list(ds_dict.keys()).index(current_active_id)
+            if current_active_id in ds_dict
+            else 0
+        )
+        chosen_id = st.selectbox(
+            "Active dataset",
+            options=list(ds_dict.keys()),
+            index=selected_idx,
+            format_func=lambda dataset_id: ds_dict[dataset_id],
+            help="This dataset is used by Explore, Experiment, and Clustering.",
+        )
+        if NavigationContext.set_active_dataset(chosen_id):
+            st.rerun()
+    else:
+        st.info("No datasets yet. Import a CSV or load an offline demo to begin.")
 
     # Track active/viewed dataset in session state
     if "active_dataset_id" not in st.session_state:
@@ -40,7 +69,10 @@ def render_datasets_page() -> None:
     # 1. TAB: Upload CSV
     with tab_upload:
         st.subheader("Upload a Tabular CSV")
-        st.caption("Supports UTF-8 and UTF-8-BOM encoded CSVs up to 10 MiB, 20,000 rows, and 100 columns.")
+        st.caption(
+            f"Supports UTF-8 and UTF-8-BOM CSVs up to {settings.max_upload_mib} MiB, "
+            f"{settings.max_rows:,} rows, and {settings.max_columns} columns."
+        )
 
         uploaded_file = st.file_uploader(
             "Select CSV file",
@@ -68,7 +100,7 @@ def render_datasets_page() -> None:
                             raw_bytes=file_bytes,
                             display_name=ds_name,
                         )
-                    st.session_state["active_dataset_id"] = new_ds.id
+                    NavigationContext.set_active_dataset(new_ds.id)
                     st.success(f"Dataset **{new_ds.display_name}** ingested successfully! ({new_ds.row_count:,} rows, {new_ds.column_count} columns)")
                     st.rerun()
                 except ServiceError as err:
@@ -83,8 +115,8 @@ def render_datasets_page() -> None:
 
         demo_options = {
             DemoDatasetKind.IRIS: "🌸 Iris Flower Classification (150 rows, 4 numeric features, 3 classes)",
-            DemoDatasetKind.SYNTHETIC_REGRESSION: "📈 Synthetic Regression (200 rows, 4 numeric features, continuous target)",
-            DemoDatasetKind.SYNTHETIC_BLOBS: "🫧 Synthetic 3D Blobs Clustering (300 rows, 3 numeric features, 3 clusters)",
+            DemoDatasetKind.SYNTHETIC_REGRESSION: "📈 Synthetic Regression (500 rows, 6 numeric features, continuous target)",
+            DemoDatasetKind.SYNTHETIC_BLOBS: "🫧 Synthetic 4D Blobs Clustering (600 rows, 4 numeric features, 3 clusters)",
         }
 
         selected_kind = st.selectbox(
@@ -110,7 +142,7 @@ def render_datasets_page() -> None:
                         demo_kind=selected_kind,
                         seed=int(seed),
                     )
-                st.session_state["active_dataset_id"] = demo_ds.id
+                NavigationContext.set_active_dataset(demo_ds.id)
                 st.success(f"Demo **{demo_ds.display_name}** loaded successfully!")
                 st.rerun()
             except ServiceError as err:
@@ -118,29 +150,23 @@ def render_datasets_page() -> None:
             except Exception as exc:
                 st.error(f"Failed to generate demo: {exc}")
 
-    # 3. TAB: Existing Datasets
     with tab_manage:
         st.subheader("Datasets in this Project")
-        project_datasets = service.list_datasets(active_project.id)
-
         if not project_datasets:
             st.info("No datasets loaded in this project yet. Upload a CSV or load a demo dataset.")
         else:
-            ds_dict = {ds.id: f"{ds.display_name} ({ds.row_count:,} rows, {ds.column_count} cols) — {ds.created_at[:10]}" for ds in project_datasets}
-            current_active_id = st.session_state.get("active_dataset_id")
-            selected_idx = 0
-            if current_active_id and current_active_id in ds_dict:
-                selected_idx = list(ds_dict.keys()).index(current_active_id)
-
-            chosen_id = st.selectbox(
-                "Select dataset to inspect",
-                options=list(ds_dict.keys()),
-                index=selected_idx,
-                format_func=lambda x: ds_dict[x],
-            )
-            if chosen_id != current_active_id:
-                st.session_state["active_dataset_id"] = chosen_id
-                st.rerun()
+            dataset_rows = [
+                {
+                    "Dataset": dataset.display_name,
+                    "Rows": dataset.row_count,
+                    "Columns": dataset.column_count,
+                    "Source": dataset.source_kind.title(),
+                    "Created": dataset.created_at[:10],
+                }
+                for dataset in project_datasets
+            ]
+            st.dataframe(dataset_rows, use_container_width=True, hide_index=True)
+            st.caption("Use the Active dataset selector above to inspect or work with a dataset.")
 
     # RENDER PROFILE VIEW IF A DATASET IS ACTIVE
     active_dataset_id = st.session_state.get("active_dataset_id")
@@ -153,8 +179,17 @@ def render_datasets_page() -> None:
 
 def render_dataset_inspection(dataset: DatasetSummary, service: DatasetService) -> None:
     """Render structural metrics, quality warnings, role suggestions, and data preview."""
-    st.subheader(f"📊 Dataset Profile: {dataset.display_name}")
-    st.caption(f"Source: `{dataset.source_kind.upper()}` • Created: `{dataset.created_at[:19].replace('T', ' ')} UTC` • ID: `{dataset.id[:8]}` • SHA-256: `{dataset.raw_sha256[:12]}...`")
+    st.subheader(f"Dataset Profile: {dataset.display_name}")
+    st.caption(
+        f"{dataset.source_kind.title()} source · Created "
+        f"{dataset.created_at[:19].replace('T', ' ')} UTC"
+    )
+    with st.expander("Dataset details"):
+        st.code(
+            f"Dataset ID: {dataset.id}\n"
+            f"SHA-256: {dataset.raw_sha256}\n"
+            f"Parser: {dataset.parser_version}"
+        )
 
     profile = dataset.get_profile()
 

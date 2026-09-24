@@ -49,7 +49,8 @@ def render_explore_page() -> None:
         format_func=lambda x: ds_options[x],
         key="explore_dataset_selector",
     )
-    st.session_state["active_dataset_id"] = selected_dataset_id
+    if NavigationContext.set_active_dataset(selected_dataset_id):
+        st.rerun()
 
     dataset = dataset_service.get_dataset(selected_dataset_id)
     if not dataset:
@@ -143,9 +144,21 @@ def render_explore_page() -> None:
             key="explore_random_seed",
         )
 
-    # Build view and split
-    view_key = f"view_{dataset.id}_{target_choice}_{task_choice.value}"
-    split_key = f"split_{dataset.id}_{target_choice}_{task_choice.value}"
+    # Build view and split keys from the complete current draft configuration.
+    draft_signature = hash(
+        (
+            dataset.id,
+            target_choice,
+            task_choice.value,
+            tuple(selected_numeric),
+            tuple(selected_categorical),
+            test_frac,
+            cv_folds,
+            int(random_seed),
+        )
+    )
+    view_key = f"view_{draft_signature}"
+    split_key = f"split_{draft_signature}"
 
     if st.button("Prepare Verified Split & Generate Development EDA", type="primary"):
         try:

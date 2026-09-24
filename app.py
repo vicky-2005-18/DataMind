@@ -9,6 +9,7 @@ import streamlit as st
 
 from datamind.config import get_settings
 from datamind.storage.database import run_migrations
+from datamind.ui.components import apply_global_styles
 from datamind.ui.navigation import NavigationContext, render_sidebar
 from datamind.ui.pages.clustering import render_clustering_page
 from datamind.ui.pages.compare import render_compare_page
@@ -41,6 +42,7 @@ def bootstrap_application() -> None:
 def main() -> None:
     """Main application execution router."""
     bootstrap_application()
+    apply_global_styles()
 
     pages = {
         "Home": render_home_page,
