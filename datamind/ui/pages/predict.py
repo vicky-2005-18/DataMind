@@ -102,26 +102,41 @@ def render_predict_page() -> None:
     )
 
     input_df: Optional[pd.DataFrame] = None
+    should_predict = False
 
     if predict_mode == "Single Row (manual input)":
         st.markdown("#### Enter Feature Values")
-        st.caption("Fill in each feature value. Leave blank to treat as missing (NaN will be imputed).")
+        st.caption("Fill in each feature value. Leave blank to treat as missing; the saved pipeline will impute it.")
         row_values = {}
-        cols_per_row = 3
-        field_cols = st.columns(cols_per_row)
-        for i, feat in enumerate(feature_names):
-            col = field_cols[i % cols_per_row]
-            if feat in numeric_features:
-                val = col.text_input(f"{feat} (numeric)", key=f"pred_feat_{feat}")
-                row_values[feat] = float(val) if val.strip() else None
+        with st.form("predict_single_form"):
+            for feat in feature_names:
+                field_type = "numeric" if feat in numeric_features else "text"
+                row_values[feat] = st.text_input(
+                    f"{feat} ({field_type})",
+                    key=f"pred_feat_{feat}",
+                )
+            should_predict = st.form_submit_button("Predict Single Row", type="primary")
+
+        if should_predict:
+            parsed_values = {}
+            invalid_fields = []
+            for feat, value in row_values.items():
+                if not value.strip():
+                    parsed_values[feat] = None
+                elif feat in numeric_features:
+                    try:
+                        parsed_values[feat] = float(value)
+                    except ValueError:
+                        invalid_fields.append(feat)
+                else:
+                    parsed_values[feat] = value
+            if invalid_fields:
+                st.error(f"Enter valid numbers for: {', '.join(invalid_fields)}.")
+                should_predict = False
             else:
-                val = col.text_input(f"{feat} (text)", key=f"pred_feat_{feat}")
-                row_values[feat] = val if val.strip() else None
+                input_df = pd.DataFrame([parsed_values])
 
-        if st.button("🔮 Predict Single Row", type="primary", key="predict_single_btn"):
-            input_df = pd.DataFrame([row_values])
-
-    else:  # Batch CSV Upload
+    else:
         st.markdown(f"#### Upload CSV (max {MAX_PREDICTION_ROWS:,} rows)")
         st.caption(
             f"Upload a CSV with the same columns as the training features. "
@@ -145,11 +160,14 @@ def render_predict_page() -> None:
                 st.error(f"Failed to read CSV: {exc}")
                 input_df = None
 
-        if input_df is not None and st.button("🔮 Run Batch Prediction", type="primary", key="predict_batch_btn"):
-            pass  # inference triggered below
+        if input_df is not None:
+            should_predict = st.button(
+                "Run Batch Prediction",
+                type="primary",
+                key="predict_batch_btn",
+            )
 
-    # ── Run Inference ─────────────────────────────────────────────────
-    if input_df is not None:
+    if input_df is not None and should_predict:
         try:
             with st.spinner("Running inference with saved champion pipeline..."):
                 batch = prediction_service.predict(

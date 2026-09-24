@@ -41,14 +41,15 @@ def generate_demo_csv(demo_kind: DemoDatasetKind, seed: int = 42) -> Tuple[str, 
 
     elif demo_kind == DemoDatasetKind.SYNTHETIC_REGRESSION:
         X, y = make_regression(
-            n_samples=200,
-            n_features=4,
-            noise=15.0,
+            n_samples=500,
+            n_features=6,
+            n_informative=4,
+            noise=10.0,
             random_state=seed,
         )
         df = pd.DataFrame(
             X.round(4),
-            columns=["feature_1", "feature_2", "feature_3", "feature_4"],
+            columns=[f"feature_{index}" for index in range(1, 7)],
         )
         df["target"] = y.round(4)
         display_name = "Synthetic Regression Demo"
@@ -58,31 +59,34 @@ def generate_demo_csv(demo_kind: DemoDatasetKind, seed: int = 42) -> Tuple[str, 
             "target_hint": "target",
             "seed": seed,
             "samples": len(df),
-            "features": 4,
-            "noise": 15.0,
+            "features": 6,
+            "informative_features": 4,
+            "noise": 10.0,
             "offline": True,
         }
 
     elif demo_kind == DemoDatasetKind.SYNTHETIC_BLOBS:
         X, _ = make_blobs(
-            n_samples=300,
-            n_features=3,
+            n_samples=600,
+            n_features=4,
             centers=3,
+            cluster_std=1.0,
             random_state=seed,
         )
         df = pd.DataFrame(
             X.round(4),
-            columns=["feature_1", "feature_2", "feature_3"],
+            columns=[f"feature_{index}" for index in range(1, 5)],
         )
-        display_name = "Synthetic 3D Blobs Clustering Demo"
+        display_name = "Synthetic 4D Blobs Clustering Demo"
         source_meta = {
             "demo_kind": "synthetic_blobs",
             "task_hint": "clustering",
             "target_hint": None,
             "seed": seed,
             "samples": len(df),
-            "features": 3,
+            "features": 4,
             "centers": 3,
+            "cluster_std": 1.0,
             "offline": True,
         }
     else:

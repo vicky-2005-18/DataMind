@@ -55,9 +55,9 @@ Do not invent user-study participants or claim improvements without measured evi
 
 | Dataset/version | Task | Model | CV primary mean ± fold SD | Baseline | Holdout metric if finalized | Time | Environment |
 |---|---|---|---|---|---|---|---|
-| To be measured | — | — | — | — | — | — | — |
+| Iris / raw SHA-256 `e404da8a…` | Classification | Logistic regression | 0.957971 ± 0.026772 macro F1 | 0.166667 macro F1 | 0.933333 macro F1 | 3.3684 s for baseline + three selected models | Windows 11, Python 3.12.10, scikit-learn 1.9.1, AMD64 12 logical CPUs |
 
-The empty row is intentional. Replace it with actual run data only.
+Measured by `scripts/final_verification.py` on 24 September 2026 with seed 42. The reported peak memory is Python allocation observed by `tracemalloc` (0.8411 MiB), not whole-process resident memory.
 
 ## Suggested final report chapters
 

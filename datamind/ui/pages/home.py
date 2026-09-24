@@ -5,6 +5,8 @@ from __future__ import annotations
 import streamlit as st
 
 from datamind.contracts import ServiceError
+from datamind.services.datasets import DatasetService
+from datamind.services.experiments import ExperimentService
 from datamind.services.projects import ProjectService
 from datamind.ui.components import render_active_project_banner, render_header, render_service_error
 from datamind.ui.navigation import NavigationContext
@@ -22,7 +24,22 @@ def render_home_page() -> None:
     render_active_project_banner(active_project)
 
     st.write("")
+    st.subheader("From raw data to defensible results")
+    step_cols = st.columns(4)
+    steps = (
+        ("1", "Create", "Open a project workspace."),
+        ("2", "Prepare", "Load and understand data."),
+        ("3", "Experiment", "Train and compare models."),
+        ("4", "Deliver", "Predict, explain, and export."),
+    )
+    for column, (number, label, detail) in zip(step_cols, steps):
+        with column:
+            with st.container(border=True):
+                st.caption(f"STEP {number}")
+                st.markdown(f"**{label}**")
+                st.caption(detail)
 
+    st.write("")
     col1, col2 = st.columns([1, 1], gap="large")
 
     with col1:
@@ -84,9 +101,35 @@ def render_home_page() -> None:
 
     st.divider()
 
-    st.subheader("Recent Activity")
-    st.caption("Experiments and model evaluations across this workspace.")
-    st.info(
-        "ℹ️ **No experiments run yet.** DataMind never fabricates activity. "
-        "Once you load a dataset (M1) and train models (M2), verifiable results will appear here."
-    )
+    st.subheader("Workspace Activity")
+    st.caption("Persisted datasets and experiments in the active project.")
+    if not active_project:
+        st.info("Create or select a project to begin building a reproducible workspace.")
+        return
+
+    datasets = DatasetService().list_datasets(active_project.id)
+    experiments = ExperimentService().list_experiments(active_project.id)
+    completed = [experiment for experiment in experiments if experiment.status == "completed"]
+    metric_cols = st.columns(3)
+    metric_cols[0].metric("Datasets", len(datasets))
+    metric_cols[1].metric("Experiments", len(experiments))
+    metric_cols[2].metric("Completed Runs", len(completed))
+
+    if not datasets:
+        st.info("Start by opening **Datasets** and loading a demo or importing a CSV file.")
+    elif not experiments:
+        st.info("Your data is ready. Open **Explore** to choose a target and prepare a modeling split.")
+    else:
+        st.markdown("#### Recent experiments")
+        rows = [
+            {
+                "Experiment": experiment.name,
+                "Task": experiment.task.value.title(),
+                "Status": experiment.status.title(),
+                "Primary Metric": experiment.primary_metric,
+                "Created": experiment.created_at[:19].replace("T", " "),
+            }
+            for experiment in experiments[:5]
+        ]
+        st.dataframe(rows, use_container_width=True, hide_index=True)
+        st.caption("Open Compare, Predict, or Explain & Export to continue with saved results.")

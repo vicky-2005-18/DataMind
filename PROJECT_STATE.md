@@ -1,7 +1,7 @@
 # Project state and handover
 
-Last updated: 2026-09-21
-Current stage: M3 — Persistent MVP complete and verified.
+Last updated: 2026-09-24
+Current stage: M6 — Final verification complete with two documented manual-evidence limitations.
 
 ## Authoritative status
 
@@ -24,8 +24,13 @@ Current stage: M3 — Persistent MVP complete and verified.
 - Prediction: validates raw feature schema against `input_schema.json`, reuses the saved fitted pipeline (`champion.joblib`), supports single-row and bounded CSV batches (max 500 rows). Unseen categories handled via OHE `handle_unknown='ignore'`. Missing model raises `MODEL_UNAVAILABLE`.
 - Recovery service: on startup detects stale `running` experiments and marks them `interrupted`; detects orphaned experiment directories and tags them with `.orphan` marker.
 - Streamlit UI: Explore page (development EDA), Experiments page (CV training, leaderboard, finalize holdout, experiment history), Compare page (compatible comparison leaderboard + bar chart), Predict page (single-row input form + CSV batch upload with results table and download).
-- 65/65 automated tests passing (`pytest -q`), code clean (`ruff check .`), demo (`demo_m3_mvp.py`) passing.
-- Next action: Implement M4 — Explain and Export (feature importance, HTML/Markdown report, ZIP bundle).
+- M5 K-Means lab persists exactly one selected-k trial with model, configuration and diagnostic artifacts; elbow points remain diagnostic data rather than trial rows.
+- M5 preprocessing uses median imputation and standardization; k is bounded by row and distinct transformed-row counts.
+- Inertia, cluster sizes, seeded silhouette sampling (maximum 2,000 rows), explicit undefined reasons, and PCA display coordinates are recorded.
+- Algorithm cards and seeded decision-tree, kNN and K-Means playgrounds render actual fitted outputs; playground results remain synthetic demonstrations.
+- Supervised comparison rejects clustering experiments and the UI filters them from its leaderboard.
+- Targeted M5 evidence: 4/4 T35–T38 tests passing; 4/4 UI smoke tests passing; changed-file Ruff checks passing; `scripts/demo_m5.py` completed offline.
+- Next action: M6 final audit, including unresolved M4 audit findings and full-project lint cleanup.
 
 ## Decisions in force
 
@@ -84,5 +89,33 @@ Python + Streamlit + scikit-learn + SQLite; local single user; tabular CSV; CPU;
 | Environment | Python 3.12.10, Streamlit 1.64.0, pandas 3.0.6, scikit-learn 1.9.1, NumPy 2.5.3, Plotly 7.1.0, SQLite 3.49.1, Windows 11. |
 | Decision changes | None. |
 | Next smallest task | M4 — Explain and Export: bounded permutation feature importance, HTML/Markdown experiment report, ZIP bundle with manifest and checksums. |
+
+| Field | Record actual evidence |
+|---|---|
+| Date and milestone | 2026-09-24 • M5 — Clustering and interactive discovery |
+| Implemented behavior | Numeric K-Means lab with median imputation, standardization, validated k, inertia, cluster sizes, bounded seeded silhouette and N/A reasons, elbow sweep diagnostics, PCA display projection, one persisted selected-k trial, registered artifact hashes, reviewed algorithm cards, and real seeded tree/kNN/K-Means playground outputs. Clustering and playground results remain outside the supervised leaderboard. |
+| Changed paths | `datamind/contracts.py`, `datamind/services/clustering.py`, `datamind/services/playground.py`, `datamind/services/comparison.py`, `datamind/ui/pages/clustering.py`, `datamind/ui/pages/discover.py`, `datamind/ui/pages/compare.py`, `tests/unit/test_m5_clustering_discovery.py`, `scripts/demo_m5.py`, `README.md`, `TASKS.md`, `PROJECT_STATE.md` |
+| Commands run | `.venv\\Scripts\\python.exe -m pytest tests\\unit\\test_m5_clustering_discovery.py -q`<br>`.venv\\Scripts\\python.exe -m pytest tests\\unit\\test_m5_clustering_discovery.py tests\\ui\\test_app_smoke.py -q`<br>`.venv\\Scripts\\python.exe -m ruff check <M5 changed files>`<br>`.venv\\Scripts\\python.exe scripts\\demo_m5.py` |
+| Test result | T35–T38: **4 passed in 2.11s**. M5 plus UI smoke: **8 passed in 3.78s**. Ruff: **All checks passed** for M5 changed files. |
+| Manual/demo evidence | Offline seeded blobs run produced experiment `e3a6316b-91d5-4630-8b26-377cc1e7ef7c`: cluster sizes 100/100/100, inertia 31.833647710980145, silhouette 0.7740245866459821 on 300 rows, 10 elbow points, exactly one trial, three stored artifact paths. Tree and kNN meshes were 180×180; K-Means playground produced four requested clusters. |
+| Known defects | Full-project Ruff is not yet clean because unfinished M4 files/tests contain lint and contract issues identified by audit. M6 must resolve those before final release claims. Browser screenshot capture and laptop-resolution manual inspection remain M6 work. |
+| Environment | Python 3.12.10, Streamlit 1.64.0, pandas 3.0.6, scikit-learn 1.9.1, NumPy 2.5.3, Plotly 7.1.0, Windows 11. |
+| Decision changes | None. Elbow sweep is persisted inside `clustering_diagnostics.json`; the UI draws the real plot from that artifact rather than storing duplicate trial IDs. |
+| Next smallest task | M6 final verification: repair outstanding M4 export defects, run the entire suite/lint/fresh setup, inspect laptop UI, and document performance and limitations. |
+
+| Field | Record actual evidence |
+|---|---|
+| Date and milestone | 2026-09-24 • M6 — Final verification and academic demo |
+| Implemented/fixed behavior | Repaired M4 target/split/scorer/feature-bound defects; reports now derive from stored facts, escape HTML, include real development permutation rows, failures, holdout exposure, environment and hashes. Model ZIP now contains the required lowercase-manifest bundle and trusted-joblib warning. T34 invokes production CSV escaping. T39 centralizes dataset/project draft invalidation and scopes displayed results to the selected dataset. Demo generators now match `DEMO_AND_EVALUATION` (500×6 regression and 600×4 blobs). |
+| Commands run | `.venv\\Scripts\\python.exe -m pytest -q`<br>`.venv\\Scripts\\python.exe -m ruff check .`<br>`.venv\\Scripts\\python.exe scripts\\verify_environment.py`<br>`.venv\\Scripts\\python.exe scripts\\smoke_demo.py`<br>`.venv\\Scripts\\python.exe scripts\\demo_m2.py`<br>`$env:PYTHONIOENCODING='utf-8'; .venv\\Scripts\\python.exe scripts\\demo_m3_mvp.py`<br>`.venv\\Scripts\\python.exe scripts\\demo_m5.py`<br>`.venv\\Scripts\\python.exe scripts\\final_verification.py`<br>Streamlit loopback launch on port 8501 and HTTP request. |
+| Test result | **74 passed in 10.26s**; Ruff **all checks passed**; UI suite **5 passed in 3.12s**; Streamlit returned HTTP 200. Required T01–T44 are represented, including new T39 coverage. |
+| Performance evidence | Windows 11, Python 3.12.10, AMD64 12 logical CPUs. Iris import/profile: **0.0386 s**, peak `tracemalloc` **0.5115 MiB**. Baseline + three-model Iris experiment: **3.3684 s**, peak `tracemalloc` **0.8411 MiB**. Both performance goals passed on this machine. |
+| Academic result | Experiment `0d3203c3-fc84-465d-8e66-3ea90910af78`; selected logistic regression; macro-F1 CV **0.957971 ± 0.026772**; dummy baseline **0.166667**; finalized holdout macro-F1 **0.933333**; holdout previously exposed `false`. |
+| Downloaded report example | `storage/exports/0d3203c3-fc84-465d-8e66-3ea90910af78_report.html`; structured evidence: `storage/exports/m6_final_evidence.json`. |
+| Completed requirements | All P0/P1 functional requirements have implemented paths and automated/service evidence. Environment verification, offline demos, persistence, exports, prediction, clustering and playground demonstrations completed. |
+| Partial requirements | NFR-08 laptop presentation was assessed through Streamlit AppTest and successful local HTTP launch, but no exact 1366×768 browser screenshot was captured. Demo logs and real report exist, but final browser screenshots were not created in this CLI environment. |
+| Missing requirements | No known missing P0/P1 implementation requirement. No user study was conducted or claimed. |
+| Limitations | Local single user; bounded tabular data; synchronous CPU fits; no grouped/time-series validation; limited registry; no causal explanation; PCA display-only; exposed holdout remains exposed; `tracemalloc` is not whole-process RSS. |
+| Next step | Manual evaluator walkthrough at 1366×768 and screenshot capture, without source changes. |
 
 Append completed session records below; preserve prior evidence. Never mark a task complete based only on code existing or an agent claiming it should work.

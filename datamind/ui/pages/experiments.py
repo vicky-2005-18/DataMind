@@ -56,6 +56,8 @@ def render_experiments_page() -> None:
         format_func=lambda x: ds_options[x],
         key="exp_dataset_selector",
     )
+    if NavigationContext.set_active_dataset(selected_dataset_id):
+        st.rerun()
     dataset = dataset_service.get_dataset(selected_dataset_id)
     if not dataset:
         return
@@ -187,7 +189,11 @@ def render_experiments_page() -> None:
 
     # ── CV Results Leaderboard ────────────────────────────────────────
     latest_exp = st.session_state.get("latest_experiment")
-    if latest_exp and latest_exp.project_id == active_project.id:
+    if (
+        latest_exp
+        and latest_exp.project_id == active_project.id
+        and latest_exp.dataset_id == selected_dataset_id
+    ):
         st.divider()
         st.subheader("🏆 Cross-Validation Results & Leaderboard")
         st.caption(f"Experiment: **{latest_exp.name}** • Primary Metric: `{latest_exp.primary_metric}` • Task: `{latest_exp.task.value}`")

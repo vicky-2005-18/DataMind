@@ -39,7 +39,7 @@ def test_t06_synthetic_regression_deterministic() -> None:
 
     parsed = validate_and_parse_csv(bytes1, filename="reg.csv")
     df = parsed.df
-    assert len(df) == 200
+    assert len(df) == 500
     assert "target" in df.columns
     assert pd.api.types.is_numeric_dtype(df["target"])
 
@@ -53,6 +53,6 @@ def test_t06_synthetic_blobs_unsupervised() -> None:
 
     parsed = validate_and_parse_csv(raw_bytes, filename="blobs.csv")
     df = parsed.df
-    assert len(df) == 300
-    assert len(df.columns) == 3
+    assert len(df) == 600
+    assert len(df.columns) == 4
     assert "target" not in df.columns

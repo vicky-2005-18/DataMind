@@ -51,18 +51,18 @@ Status convention: `[ ]` not implemented, `[x]` verified complete. All implement
 
 ## M5 — Discovery and clustering
 
-- [ ] Add numeric K-Means, elbow and cluster size summary.
-- [ ] Add valid silhouette calculation and N/A reasons.
-- [ ] Add PCA display projection distinct from scoring space.
-- [ ] Add algorithm cards and reviewed educational text.
-- [ ] Add seeded tree/kNN decision-boundary playground.
-- [ ] Verify real parameter changes update actual fitted outputs.
+- [x] Add numeric K-Means, elbow and cluster size summary.
+- [x] Add valid silhouette calculation and N/A reasons.
+- [x] Add PCA display projection distinct from scoring space.
+- [x] Add algorithm cards and reviewed educational text.
+- [x] Add seeded tree/kNN decision-boundary playground.
+- [x] Verify real parameter changes update actual fitted outputs.
 
 ## M6 — Completion
 
-- [ ] Resolve required test failures and run final suite.
-- [ ] Check UI at laptop resolution and inspect error paths.
-- [ ] Measure performance targets with recorded hardware/versions.
-- [ ] Verify fresh-environment setup and offline demos.
-- [ ] Prepare demo screenshots/logs and honest results table.
-- [ ] Update README, limitations and PROJECT_STATE for handover.
+- [x] Resolve required test failures and run final suite.
+- [ ] Check UI at laptop resolution and inspect error paths. *(Automated AppTest and HTTP launch verified; exact 1366×768 browser screenshot not captured in this CLI environment.)*
+- [x] Measure performance targets with recorded hardware/versions.
+- [x] Verify fresh-environment setup and offline demos.
+- [ ] Prepare demo screenshots/logs and honest results table. *(Logs/results/report generated; browser screenshots remain unavailable.)*
+- [x] Update README, limitations and PROJECT_STATE for handover.

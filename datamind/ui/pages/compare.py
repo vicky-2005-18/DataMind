@@ -33,7 +33,11 @@ def render_compare_page() -> None:
     comparison_service = ComparisonService(experiment_service=experiment_service)
 
     all_experiments = experiment_service.list_experiments(active_project.id)
-    completed_exps = [e for e in all_experiments if e.status == "completed" and e.selected_trial_id]
+    completed_exps = [
+        e
+        for e in all_experiments
+        if e.status == "completed" and e.selected_trial_id and e.task.value != "clustering"
+    ]
 
     if len(completed_exps) < 2:
         st.info(

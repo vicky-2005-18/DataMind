@@ -42,6 +42,11 @@ class ComparisonService:
                     ErrorCode.INVALID_MODEL_CONFIG,
                     f"Experiment '{eid}' not found.",
                 )
+            if exp.task.value == "clustering":
+                raise ServiceError(
+                    ErrorCode.INCOMPATIBLE_COMPARISON,
+                    "Clustering experiments are exploratory and are not ranked in the supervised comparison leaderboard.",
+                )
             if exp.status != "completed":
                 raise ServiceError(
                     ErrorCode.INCOMPATIBLE_COMPARISON,
