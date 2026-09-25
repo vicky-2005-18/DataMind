@@ -1,4 +1,4 @@
-"""Predict page: single-row manual input and bounded CSV batch inference (M3)."""
+"""Predict page: single-row manual input and bounded CSV batch inference."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ import json
 from typing import Optional
 
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
 
 from datamind.config import get_settings
@@ -16,7 +17,10 @@ from datamind.services.prediction import MAX_PREDICTION_ROWS, PredictionService
 from datamind.ui.components import (
     render_active_project_banner,
     render_header,
+    render_probability_bars,
     render_service_error,
+    render_workflow_stepper,
+    style_plotly_figure,
 )
 from datamind.ui.navigation import NavigationContext
 
@@ -37,6 +41,7 @@ def render_predict_page() -> None:
         title="Model Prediction",
         subtitle="Generate single-row or CSV batch predictions using fitted, validated champion pipelines",
     )
+    render_workflow_stepper("Deliver")
     active_project = NavigationContext.get_active_project()
     render_active_project_banner(active_project)
 
@@ -88,7 +93,7 @@ def render_predict_page() -> None:
     task: str = schema.get("task", "classification")
 
     st.success(
-        f"✅ **Model loaded** — {len(feature_names)} input features: "
+        f"**Model loaded** — {len(feature_names)} input features: "
         f"{len(numeric_features)} numeric, {len(categorical_features)} categorical. "
         f"Target: `{target_name}` | Task: `{task}`"
     )
@@ -155,7 +160,7 @@ def render_predict_page() -> None:
                     raw_bytes = raw_bytes[3:]
                 input_df = pd.read_csv(io.BytesIO(raw_bytes))
                 st.success(f"Loaded {len(input_df):,} rows × {len(input_df.columns)} columns.")
-                st.dataframe(input_df.head(5), use_container_width=True, hide_index=True)
+                st.dataframe(input_df.head(5), width='stretch', hide_index=True)
             except Exception as exc:
                 st.error(f"Failed to read CSV: {exc}")
                 input_df = None
@@ -177,7 +182,7 @@ def render_predict_page() -> None:
                 )
 
             st.divider()
-            st.subheader("🎯 Prediction Results")
+            st.subheader("Prediction Results")
 
             # Build results table
             result_df = input_df.copy()
@@ -187,17 +192,60 @@ def render_predict_page() -> None:
                 for i, cls_name in enumerate(batch.classes):
                     result_df[f"prob_{cls_name}"] = [row[i] for row in batch.probabilities]
 
-            st.dataframe(result_df, use_container_width=True, hide_index=True)
+            st.dataframe(result_df, width='stretch', hide_index=True)
+
+            # Single-row classification confidence readout: gauge + probability bars
+            is_single_row = predict_mode == "Single Row (manual input)"
+            if (
+                is_single_row
+                and len(batch.predictions) == 1
+                and batch.probabilities
+                and batch.classes
+            ):
+                probs = batch.probabilities[0]
+                top_index = max(range(len(probs)), key=lambda i: probs[i])
+                top_class = batch.classes[top_index]
+                top_confidence = float(probs[top_index])
+                gauge = go.Indicator(
+                    mode="gauge+number",
+                    value=top_confidence,
+                    number={"valueformat": ".1%", "font": {"color": "#f9fafb"}},
+                    title={
+                        "text": f"Confidence for class <b>{top_class}</b>",
+                        "font": {"color": "#94a3b8", "size": 14},
+                    },
+                    gauge={
+                        "axis": {"range": [0, 1], "tickformat": ".0%"},
+                        "bar": {"color": "#6366f1"},
+                        "steps": [
+                            {"range": [0, 0.5], "color": "rgba(244, 63, 94, 0.18)"},
+                            {"range": [0.5, 0.75], "color": "rgba(245, 158, 11, 0.18)"},
+                            {"range": [0.75, 1], "color": "rgba(16, 185, 129, 0.18)"},
+                        ],
+                        "threshold": {
+                            "line": {"color": "#06b6d4", "width": 2},
+                            "thickness": 0.9,
+                            "value": top_confidence,
+                        },
+                    },
+                )
+                gauge_fig = style_plotly_figure(go.Figure(gauge))
+                st.plotly_chart(gauge_fig, width='stretch')
+                render_probability_bars(batch.classes, [float(p) for p in probs])
+                st.caption(
+                    "Probabilities come from the persisted champion pipeline via predict_proba. "
+                    "Gauge color bands are paired with the printed numeric value."
+                )
 
             # Warnings
             if batch.warnings:
                 for w in batch.warnings:
-                    st.warning(f"⚠️ {w}")
+                    st.warning(w)
 
             # CSV download
             csv_bytes = prediction_service.export_batch_csv(input_df, batch, target_name)
             st.download_button(
-                label="⬇️ Download Predictions as CSV",
+                label="Download Predictions as CSV",
                 data=csv_bytes,
                 file_name=f"predictions_{selected_exp_id[:8]}_{target_name}.csv",
                 mime="text/csv",

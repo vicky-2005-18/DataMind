@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pandas as pd
 import plotly.express as px
 import streamlit as st
 
@@ -9,9 +10,13 @@ from datamind.contracts import ColumnRole, ServiceError, TaskType
 from datamind.services.datasets import DatasetService
 from datamind.services.experiments import ExperimentService
 from datamind.ui.components import (
+    pill_html,
     render_active_project_banner,
     render_header,
     render_service_error,
+    render_split_bar,
+    render_workflow_stepper,
+    style_plotly_figure,
 )
 from datamind.ui.navigation import NavigationContext
 
@@ -22,6 +27,7 @@ def render_explore_page() -> None:
         title="Exploratory Data Analysis & Split Preparation",
         subtitle="Validate modeling roles, generate leakage-safe development/holdout splits, and explore development distributions",
     )
+    render_workflow_stepper("Prepare")
     active_project = NavigationContext.get_active_project()
     render_active_project_banner(active_project)
 
@@ -125,6 +131,7 @@ def render_explore_page() -> None:
             format_func=lambda f: f"{int(f * 100)}% Holdout (Sequestered)",
             index=0,
             key="explore_test_frac",
+            help="Percentage of rows withheld as final test set. Example: 20% = 150 rows withheld from 750 total.",
         )
     with s_col2:
         cv_folds = st.selectbox(
@@ -133,6 +140,7 @@ def render_explore_page() -> None:
             format_func=lambda k: f"{k} Folds",
             index=0,
             key="explore_cv_folds",
+            help="Number of folds for cross-validation. 5 folds: each fold is 20% of development set.",
         )
     with s_col3:
         random_seed = st.number_input(
@@ -142,7 +150,14 @@ def render_explore_page() -> None:
             value=42,
             step=1,
             key="explore_random_seed",
+            help="Seed for reproducible split generation. Same seed always produces the same split.",
         )
+
+    # Planned partition preview from the real row count and chosen holdout fraction
+    planned_holdout = int(round(dataset.row_count * test_frac))
+    planned_dev = dataset.row_count - planned_holdout
+    st.markdown("#### Planned Partition")
+    render_split_bar(planned_dev, planned_holdout)
 
     # Build view and split keys from the complete current draft configuration.
     draft_signature = hash(
@@ -191,15 +206,61 @@ def render_explore_page() -> None:
         manifest = st.session_state[split_key]
 
         st.divider()
-        st.subheader("📈 Development Data Exploratory Analysis")
+
+        # Scope header
+        st.markdown(
+            f"**Dataset:** {dataset.display_name} | **Task:** {view.task.value.title()} | "
+            f"**Target:** `{view.target}` | **Development rows:** {len(manifest.train_row_ids):,}"
+        )
+        st.markdown("#### Verified Partition")
+        render_split_bar(len(manifest.train_row_ids), len(manifest.test_row_ids))
+        st.markdown("### Development Data Exploratory Analysis")
         st.warning(
-            "🔒 **Strict Leakage Prevention Guarantee**: All metrics, histograms, and correlations shown below "
-            f"are computed **strictly on the {len(manifest.train_row_ids)} development rows**. "
-            f"The {len(manifest.test_row_ids)} holdout rows are sequestered and completely hidden from this view."
+            "**Strict Leakage Prevention**: All analysis below uses only the development set. "
+            f"The {len(manifest.test_row_ids):,} holdout rows are sequestered."
         )
 
         df = dataset_service.load_dataframe(dataset.id)
         dev_df = df.loc[manifest.train_row_ids]
+
+        # Development diagnostics: class balance or target skew
+        if view.task == TaskType.CLASSIFICATION:
+            class_share = dev_df[view.target].value_counts(normalize=True)
+            majority_share = float(class_share.iloc[0])
+            majority_class = class_share.index[0]
+            if majority_share > 0.70:
+                st.markdown(
+                    pill_html(
+                        f"Imbalance risk: majority class '{majority_class}' holds {majority_share:.1%} of dev rows",
+                        "amber",
+                    ),
+                    unsafe_allow_html=True,
+                )
+                st.caption(
+                    "Severe imbalance can inflate raw accuracy. Consider balanced accuracy or F1 as the primary metric."
+                )
+            else:
+                st.markdown(
+                    pill_html(
+                        f"Class balance acceptable: largest class holds {majority_share:.1%} of dev rows",
+                        "success",
+                    ),
+                    unsafe_allow_html=True,
+                )
+        else:
+            target_skew = float(dev_df[view.target].skew())
+            if abs(target_skew) > 1.0:
+                direction = "Right-skewed" if target_skew > 0 else "Left-skewed"
+                skew_pill = pill_html(f"Target skew: {target_skew:.2f} — {direction}", "amber")
+                skew_note = (
+                    "Strongly skewed targets can degrade RMSE/MAE ranking stability. "
+                    "Review the histogram below before training."
+                )
+            else:
+                skew_pill = pill_html(f"Target skew: {target_skew:.2f} — approximately symmetric", "success")
+                skew_note = "Skewness within ±1.0 usually needs no target transformation."
+            st.markdown(skew_pill, unsafe_allow_html=True)
+            st.caption(f"{skew_note} Computed on development rows only.")
 
         # Target distribution
         st.markdown(f"#### Target Distribution: `{view.target}` (Development Set)")
@@ -212,8 +273,12 @@ def render_explore_page() -> None:
                 y="Count",
                 title=f"Class Frequencies on Development Rows (N={len(dev_df)})",
                 color=view.target,
+                color_discrete_sequence=["#6366f1", "#06b6d4", "#10b981", "#f59e0b", "#f43f5e"],
             )
-            st.plotly_chart(fig_target, use_container_width=True)
+            # Let Plotly use its default hover template for categorical data
+            # This ensures proper legend grouping and tooltip display
+            fig_target = style_plotly_figure(fig_target)
+            st.plotly_chart(fig_target, width='stretch')
         else:
             fig_target = px.histogram(
                 dev_df,
@@ -221,8 +286,14 @@ def render_explore_page() -> None:
                 nbins=30,
                 title=f"Continuous Target Histogram on Development Rows (N={len(dev_df)})",
                 marginal="box",
+                color_discrete_sequence=["#6366f1"],
             )
-            st.plotly_chart(fig_target, use_container_width=True)
+            fig_target.update_traces(
+                hovertemplate="%{x} — Count: %{y}<extra></extra>",
+                selector=dict(type="histogram"),
+            )
+            fig_target = style_plotly_figure(fig_target)
+            st.plotly_chart(fig_target, width='stretch')
 
         # Feature distributions
         if view.numeric_features:
@@ -240,6 +311,11 @@ def render_explore_page() -> None:
                     barmode="overlay",
                     nbins=25,
                     title=f"Distribution of '{chosen_feat}' by '{view.target}' (Development Rows)",
+                    color_discrete_sequence=["#6366f1", "#06b6d4", "#10b981", "#f59e0b", "#f43f5e"],
+                )
+                fig_feat.update_traces(
+                    hovertemplate="%{x} — %{y}<extra></extra>",
+                    selector=dict(type="histogram"),
                 )
             else:
                 fig_feat = px.scatter(
@@ -248,8 +324,14 @@ def render_explore_page() -> None:
                     y=view.target,
                     title=f"Scatter: '{chosen_feat}' vs '{view.target}' (Development Rows)",
                     trendline="ols",
+                    color_discrete_sequence=["#6366f1"],
                 )
-            st.plotly_chart(fig_feat, use_container_width=True)
+                fig_feat.update_traces(
+                    hovertemplate=f"%{{x}} — {view.target}: %{{y}}<extra></extra>",
+                    selector=dict(type="scatter"),
+                )
+            fig_feat = style_plotly_figure(fig_feat)
+            st.plotly_chart(fig_feat, width='stretch')
 
             # Correlation Heatmap
             if len(view.numeric_features) >= 2:
@@ -268,6 +350,34 @@ def render_explore_page() -> None:
                     zmax=1.0,
                     title="Correlation Matrix (Development Rows Only)",
                 )
-                st.plotly_chart(fig_corr, use_container_width=True)
+                fig_corr = style_plotly_figure(fig_corr)
+                st.plotly_chart(fig_corr, width='stretch')
+
+                # Collinearity auto-flagging from the same development-only matrix
+                collinear_pairs = []
+                for i in range(len(corr_cols)):
+                    for j in range(i + 1, len(corr_cols)):
+                        value = corr_matrix.iloc[i, j]
+                        if pd.notna(value) and abs(value) > 0.9:
+                            collinear_pairs.append((corr_cols[i], corr_cols[j], float(value)))
+                if collinear_pairs:
+                    with st.expander(
+                        f"Highly collinear feature pairs (|r| > 0.9) — {len(collinear_pairs)}",
+                        expanded=True,
+                    ):
+                        for feat_a, feat_b, value in collinear_pairs:
+                            st.markdown(
+                                pill_html(f"{feat_a} ↔ {feat_b}: r = {value:.3f}", "amber"),
+                                unsafe_allow_html=True,
+                            )
+                        st.caption(
+                            "Near-duplicate features can split permutation importance and destabilize "
+                            "linear coefficients. Dropping one of each pair is usually safe for tree models."
+                        )
+                else:
+                    st.markdown(
+                        pill_html("No feature pairs exceed |r| > 0.9 on development rows", "success"),
+                        unsafe_allow_html=True,
+                    )
 
         st.info("Split manifest and modeling view are ready! Proceed to the **Experiment** page to train models.")

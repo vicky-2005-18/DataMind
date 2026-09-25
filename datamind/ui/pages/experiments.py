@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+import hashlib
+from html import escape
+from typing import Optional
+
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from datamind.config import get_settings
 from datamind.contracts import (
     AlgorithmConfig,
     PreprocessingConfig,
@@ -16,9 +21,14 @@ from datamind.ml.registry import get_algorithms_for_task, get_baseline_for_task
 from datamind.services.datasets import DatasetService
 from datamind.services.experiments import ExperimentService
 from datamind.ui.components import (
+    pill_html,
     render_active_project_banner,
+    render_bento_grid,
+    render_fold_ticker,
     render_header,
     render_service_error,
+    render_workflow_stepper,
+    style_plotly_figure,
 )
 from datamind.ui.navigation import NavigationContext
 
@@ -29,6 +39,7 @@ def render_experiments_page() -> None:
         title="Supervised Experiments",
         subtitle="Configure preprocessing, evaluate models with leak-free cross-validation, finalize holdout, and manage trial history",
     )
+    render_workflow_stepper("Model")
     active_project = NavigationContext.get_active_project()
     render_active_project_banner(active_project)
 
@@ -100,7 +111,12 @@ def render_experiments_page() -> None:
 
     # Features
     features = [c for c in col_names if c != target]
-    numeric_features = [c.name for c in schema.columns if c.name in features and c.inferred_type == "numeric"]
+    # inferred_type stores the raw pandas dtype string (e.g. "float64"), not a
+    # semantic label — a literal "numeric" comparison misroutes every feature
+    # into the categorical pipeline and crashes the categorical imputer.
+    numeric_features = [
+        c.name for c in schema.columns if c.name in features and pd.api.types.is_numeric_dtype(c.inferred_type)
+    ]
     categorical_features = [c for c in features if c not in numeric_features]
 
     # ── 2. Preprocessing Configuration ───────────────────────────────
@@ -125,7 +141,10 @@ def render_experiments_page() -> None:
     baseline_desc = get_baseline_for_task(task)
     candidate_algos = [a for a in available_algos if not a.is_baseline]
 
-    st.info(f"📌 **Mandatory Baseline Included:** `{baseline_desc.display_name}` ({baseline_desc.algorithm_id})")
+    st.markdown(
+        pill_html(f"Mandatory baseline included: {baseline_desc.display_name} [{baseline_desc.algorithm_id}]", "primary"),
+        unsafe_allow_html=True,
+    )
 
     algo_labels = {a.algorithm_id: f"{a.display_name} [{a.algorithm_id}]" for a in candidate_algos}
     default_selected = [a.algorithm_id for a in candidate_algos[:4]]
@@ -139,6 +158,28 @@ def render_experiments_page() -> None:
         key="exp_algo_multiselect",
     )
 
+    # Live selection-state cards with complexity pills for every available algorithm
+    card_items = []
+    for descriptor in available_algos:
+        selected = descriptor.algorithm_id in selected_algo_ids
+        role_pill = pill_html("Baseline", "cyan") if descriptor.is_baseline else pill_html(
+            "Candidate", "muted"
+        )
+        state_pill = pill_html("Selected", "success") if selected else pill_html("Not selected", "muted")
+        complexity_pill = pill_html(f"Complexity order {descriptor.complexity_order}", "primary")
+        card_items.append(
+            {
+                "title": descriptor.display_name,
+                "kicker_html": role_pill,
+                "body_html": (
+                    f"<p style='font-size:0.8rem; color:var(--dm-text-muted);'>"
+                    f"<code>{escape(descriptor.algorithm_id)}</code></p>"
+                    f"<p style='margin-top:0.35rem; line-height:2;'>{complexity_pill} {state_pill}</p>"
+                ),
+            }
+        )
+    render_bento_grid(card_items)
+
     exp_name = st.text_input(
         "Experiment Name",
         value=f"{dataset.display_name} - {task.value.capitalize()} Run",
@@ -146,7 +187,7 @@ def render_experiments_page() -> None:
     )
 
     # ── Training Action ───────────────────────────────────────────────
-    if st.button("🚀 Run Supervised Cross-Validation Experiment", type="primary", disabled=len(selected_algo_ids) == 0):
+    if st.button("Run Supervised Cross-Validation Experiment", type="primary", disabled=len(selected_algo_ids) == 0):
         try:
             with st.spinner("1/3 Validating modeling view and row policies..."):
                 view = experiment_service.prepare_modeling_view(
@@ -181,7 +222,7 @@ def render_experiments_page() -> None:
                 )
 
             st.session_state["latest_experiment"] = exp_summary
-            st.success(f"✅ Experiment completed! Champion: **{exp_summary.selected_trial_id}**")
+            st.success(f"Experiment completed! Champion: **{exp_summary.selected_trial_id}**")
         except ServiceError as err:
             render_service_error(err)
         except Exception as exc:
@@ -195,11 +236,11 @@ def render_experiments_page() -> None:
         and latest_exp.dataset_id == selected_dataset_id
     ):
         st.divider()
-        st.subheader("🏆 Cross-Validation Results & Leaderboard")
+        st.subheader("Cross-Validation Results & Leaderboard")
         st.caption(f"Experiment: **{latest_exp.name}** • Primary Metric: `{latest_exp.primary_metric}` • Task: `{latest_exp.task.value}`")
 
         st.warning(
-            "🔒 **Holdout Sequestered**: In accordance with the leakage prevention protocol, "
+            "**Holdout Sequestered**: In accordance with the leakage prevention protocol, "
             "holdout test metrics are **strictly unavailable** during model exploration and CV training."
         )
 
@@ -227,7 +268,7 @@ def render_experiments_page() -> None:
                     "Is Champion": "Champion" if is_champ else "Competitor",
                 })
 
-        st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(table_rows), width='stretch', hide_index=True)
 
         if chart_data:
             chart_df = pd.DataFrame(chart_data)
@@ -238,15 +279,28 @@ def render_experiments_page() -> None:
                 error_y="Fold Variation",
                 color="Is Champion",
                 title=f"Cross-Validation Comparison ({latest_exp.primary_metric}) with Fold Variation",
-                color_discrete_map={"Champion": "#00CC96", "Competitor": "#636EFA"},
+                color_discrete_map={"Champion": "#10b981", "Competitor": "#6366f1"},
             )
-            st.plotly_chart(fig, use_container_width=True)
+            fig = style_plotly_figure(fig)
+            st.plotly_chart(fig, width='stretch')
 
         st.info(f"**Selection Audit**: {latest_exp.selection_reason}")
 
-    # ── Finalize Holdout (M3) ─────────────────────────────────────────
+        # Champion fold-by-fold ticker from stored per-fold metric records
+        champion_trial = next(
+            (t for t in latest_exp.trials if t.trial_id == latest_exp.selected_trial_id), None
+        )
+        if champion_trial is not None:
+            st.markdown(
+                f"**Champion trial:** `{champion_trial.trial_id}` — fold-by-fold "
+                f"`{latest_exp.primary_metric}`"
+            )
+            render_fold_ticker(champion_trial, latest_exp.primary_metric)
+            _render_champion_artifact_badge(latest_exp, champion_trial, prep_config)
+
+    # ── Finalize Holdout ─────────────────────────────────────────
     st.divider()
-    st.subheader("🔓 Finalize Holdout Evaluation")
+    st.subheader("Finalize Holdout Evaluation")
     st.caption(
         "Once you are satisfied with CV exploration, explicitly finalize the champion model. "
         "This is a one-time irreversible action — the model is scored against the sequestered "
@@ -270,26 +324,26 @@ def render_experiments_page() -> None:
         # Check if already finalized
         existing_eval = experiment_service.get_evaluation(finalize_exp_id)
         if existing_eval is not None:
-            st.success(f"✅ This experiment was already finalized on `{existing_eval.created_at}`.")
+            st.success(f"This experiment was already finalized on `{existing_eval.created_at}`.")
             if existing_eval.holdout_previously_exposed:
                 st.warning(
-                    "⚠️ **Holdout Previously Exposed**: This holdout split was evaluated in a prior "
+                    "**Holdout Previously Exposed**: This holdout split was evaluated in a prior "
                     "experiment. The holdout test set is no longer strictly unseen."
                 )
             _render_evaluation_results(existing_eval)
         else:
             st.warning(
-                "⚠️ **Irreversible Action**: Finalizing will expose the champion to the holdout "
+                "**Irreversible Action**: Finalizing will expose the champion to the holdout "
                 "partition. This cannot be undone."
             )
-            if st.button("🔓 Finalize Holdout Evaluation", key="finalize_btn", type="primary"):
+            if st.button("Finalize Holdout Evaluation", key="finalize_btn", type="primary"):
                 try:
                     with st.spinner("Scoring champion against sequestered holdout rows..."):
                         evaluation = experiment_service.finalize_experiment(finalize_exp_id)
-                    st.success("✅ Holdout evaluation complete and permanently recorded.")
+                    st.success("Holdout evaluation complete and permanently recorded.")
                     if evaluation.holdout_previously_exposed:
                         st.warning(
-                            "⚠️ **Holdout Previously Exposed**: Another experiment on the same "
+                            "**Holdout Previously Exposed**: Another experiment on the same "
                             "split was finalized before this one."
                         )
                     _render_evaluation_results(evaluation)
@@ -298,15 +352,15 @@ def render_experiments_page() -> None:
                 except Exception as exc:
                     st.error(f"Finalization failed: {exc}")
 
-    # ── Trial History (M3: persistence restart) ───────────────────────
+    # ── Experiment History ───────────────────────────────────
     st.divider()
-    st.subheader("📋 Experiment History")
+    st.subheader("Experiment History")
     st.caption("All experiments for this project are persisted in SQLite and survive server restarts.")
     if all_experiments:
         history_rows = []
         for e in all_experiments:
             eval_rec = experiment_service.get_evaluation(e.id)
-            finalized = "✅ Yes" if eval_rec is not None else "—"
+            finalized = "Yes" if eval_rec is not None else "—"
             history_rows.append({
                 "ID": e.id[:8],
                 "Name": e.name,
@@ -317,9 +371,67 @@ def render_experiments_page() -> None:
                 "Started": e.started_at[:19].replace("T", " "),
                 "Finalized": finalized,
             })
-        st.dataframe(pd.DataFrame(history_rows), use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(history_rows), width='stretch', hide_index=True)
     else:
         st.info("No experiments yet. Run one above to begin.")
+
+
+def _sha256_of(path) -> Optional[str]:
+    """Compute the SHA-256 hex digest of a file in bounded chunks."""
+    digest = hashlib.sha256()
+    try:
+        with open(path, "rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+    except OSError:
+        return None
+    return digest.hexdigest()
+
+
+def _render_champion_artifact_badge(experiment, champion_trial, prep_config) -> None:
+    """Render the persisted champion pipeline artifact badge with live integrity hash."""
+    exp_dir = get_settings().experiments_dir / experiment.id
+    model_path = exp_dir / "champion.joblib"
+    if not model_path.exists():
+        model_path = exp_dir / f"{experiment.selected_trial_id}_champion.joblib"
+    if not model_path.exists():
+        return
+
+    digest = _sha256_of(model_path)
+    artifact_pill = pill_html("Persisted artifact", "success")
+    flow_html = (
+        f"<p style='margin-top:0.55rem; font-size:0.85rem; color:var(--dm-text-strong);'>"
+        f"<code>{escape(prep_config.numeric_imputer)} imputer</code> → "
+        f"<code>{escape(prep_config.numeric_scaler)} scaler</code> → "
+        f"<code>one-hot encode</code> → <code>{escape(champion_trial.algorithm_id)}</code></p>"
+    )
+    seed_line = (
+        f"<p style='margin-top:0.45rem; font-size:0.8rem; color:var(--dm-text-muted);'>"
+        f"Random seed: {experiment.random_seed} • Fit duration: "
+        f"{champion_trial.fit_duration_seconds:.3f}s</p>"
+    )
+    if digest:
+        hash_line = (
+            f"<p style='margin-top:0.35rem; font-size:0.72rem; color:var(--dm-text-dim);'>"
+            f"SHA-256: <code>{digest[:16]}…{digest[-8:]}</code></p>"
+        )
+    else:
+        hash_line = "<p style='margin-top:0.35rem; font-size:0.72rem; color:var(--dm-text-dim);'>SHA-256 unavailable</p>"
+
+    render_bento_grid(
+        [
+            {
+                "title": "Champion Model Artifact",
+                "kicker_html": artifact_pill,
+                "body_html": f"{flow_html}{seed_line}{hash_line}",
+                "span": "2x1",
+            }
+        ]
+    )
+    st.caption(
+        "The hash is computed live from the persisted champion.joblib pipeline. The same pipeline "
+        "is used for holdout finalization and Predict."
+    )
 
 
 def _render_evaluation_results(evaluation) -> None:
@@ -336,7 +448,7 @@ def _render_evaluation_results(evaluation) -> None:
             "Value": f"{m.value:.6f}" if m.value is not None else "N/A",
             "Direction": m.direction.value,
         })
-    st.dataframe(pd.DataFrame(metric_rows), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(metric_rows), width='stretch', hide_index=True)
 
     if evaluation.confusion_matrix and evaluation.class_labels:
         st.markdown("#### Confusion Matrix")
@@ -345,4 +457,4 @@ def _render_evaluation_results(evaluation) -> None:
             index=[f"True: {c}" for c in evaluation.class_labels],
             columns=[f"Pred: {c}" for c in evaluation.class_labels],
         )
-        st.dataframe(cm_df, use_container_width=True)
+        st.dataframe(cm_df, width='stretch')
