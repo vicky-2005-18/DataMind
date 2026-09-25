@@ -8,11 +8,21 @@ from datamind.config import get_settings
 from datamind.contracts import DatasetSummary, DemoDatasetKind, ServiceError
 from datamind.services.datasets import DatasetService
 from datamind.ui.components import (
+    pill_html,
     render_active_project_banner,
+    render_bento_grid,
     render_header,
+    render_hero_stats,
     render_service_error,
+    render_workflow_stepper,
 )
 from datamind.ui.navigation import NavigationContext
+
+DEMO_DESCRIPTIONS = {
+    DemoDatasetKind.IRIS: "Iris Flower Classification (150 rows, 4 numeric features, 3 classes)",
+    DemoDatasetKind.SYNTHETIC_REGRESSION: "Synthetic Regression (500 rows, 6 numeric features, continuous target)",
+    DemoDatasetKind.SYNTHETIC_BLOBS: "Synthetic 4D Blobs Clustering (600 rows, 4 numeric features, 3 clusters)",
+}
 
 
 def render_datasets_page() -> None:
@@ -21,6 +31,7 @@ def render_datasets_page() -> None:
         title="Dataset Workspace",
         subtitle="Import tabular CSV datasets, load offline demos, and inspect structural quality profiles",
     )
+    render_workflow_stepper("Prepare")
 
     active_project = NavigationContext.get_active_project()
     render_active_project_banner(active_project)
@@ -63,7 +74,7 @@ def render_datasets_page() -> None:
         st.session_state["active_dataset_id"] = None
 
     tab_upload, tab_demos, tab_manage = st.tabs(
-        ["📤 Upload CSV", "🧪 Load Demo Dataset", "📚 Existing Project Datasets"]
+        ["Upload CSV", "Load Demo Dataset", "Existing Project Datasets"]
     )
 
     # 1. TAB: Upload CSV
@@ -114,9 +125,7 @@ def render_datasets_page() -> None:
         st.caption("Load curated educational datasets generated completely offline without internet dependencies.")
 
         demo_options = {
-            DemoDatasetKind.IRIS: "🌸 Iris Flower Classification (150 rows, 4 numeric features, 3 classes)",
-            DemoDatasetKind.SYNTHETIC_REGRESSION: "📈 Synthetic Regression (500 rows, 6 numeric features, continuous target)",
-            DemoDatasetKind.SYNTHETIC_BLOBS: "🫧 Synthetic 4D Blobs Clustering (600 rows, 4 numeric features, 3 clusters)",
+            kind: description for kind, description in DEMO_DESCRIPTIONS.items()
         }
 
         selected_kind = st.selectbox(
@@ -165,7 +174,7 @@ def render_datasets_page() -> None:
                 }
                 for dataset in project_datasets
             ]
-            st.dataframe(dataset_rows, use_container_width=True, hide_index=True)
+            st.dataframe(dataset_rows, width='stretch', hide_index=True)
             st.caption("Use the Active dataset selector above to inspect or work with a dataset.")
 
     # RENDER PROFILE VIEW IF A DATASET IS ACTIVE
@@ -193,16 +202,85 @@ def render_dataset_inspection(dataset: DatasetSummary, service: DatasetService) 
 
     profile = dataset.get_profile()
 
-    # KPI summary metrics
-    mcol1, mcol2, mcol3, mcol4 = st.columns(4)
-    mcol1.metric("Rows", f"{profile.row_count:,}")
-    mcol2.metric("Columns", f"{profile.column_count:,}")
-    mcol3.metric("Duplicate Rows", f"{profile.duplicate_row_count:,}")
-    mcol4.metric("Memory Size", f"{profile.memory_bytes / 1024:.1f} KB")
+    # Health bento: structural stats, type distribution, missing cells, warnings
+    role_counts: dict[str, int] = {}
+    for col in profile.columns:
+        role_counts[col.suggested_role.value] = role_counts.get(col.suggested_role.value, 0) + 1
+    role_variants = {
+        "numeric": "cyan",
+        "categorical": "primary",
+        "id_like": "muted",
+        "constant": "amber",
+        "unsupported": "rose",
+    }
+    type_pills = " ".join(
+        pill_html(f"{role.replace('_', '- ')} ({count})", role_variants.get(role, "muted"))
+        for role, count in sorted(role_counts.items())
+    )
+
+    missing_cells = sum(col.null_count for col in profile.columns)
+    total_cells = profile.row_count * profile.column_count
+    if missing_cells > 0:
+        missing_body = (
+            f"{render_hero_stats([(f'{missing_cells:,}', 'Missing cells'), (f'{total_cells:,}', 'Total cells')])}"
+            f"<p style='margin-top:0.55rem;'>{pill_html('Imputation required before training', 'amber')}</p>"
+        )
+    else:
+        missing_body = (
+            f"{render_hero_stats([('0', 'Missing cells'), (f'{total_cells:,}', 'Total cells')])}"
+            f"<p style='margin-top:0.55rem;'>{pill_html('Complete matrix', 'success')}</p>"
+        )
+
+    if profile.quality_warnings:
+        warning_body = (
+            f"<p style='margin-top:0.35rem;'>{pill_html(f'{len(profile.quality_warnings)} warnings', 'amber')}</p>"
+            "<p style='margin-top:0.55rem; font-size:0.85rem; color:var(--dm-text-muted);'>"
+            "Review the expanded warnings list below before training.</p>"
+        )
+    else:
+        warning_body = (
+            f"<p style='margin-top:0.35rem;'>{pill_html('No warnings', 'success')}</p>"
+            "<p style='margin-top:0.55rem; font-size:0.85rem; color:var(--dm-text-muted);'>"
+            "Structural checks passed for this dataset.</p>"
+        )
+
+    render_bento_grid(
+        [
+            {
+                "title": "Structural Profile",
+                "kicker_html": pill_html("Schema", "cyan"),
+                "body_html": render_hero_stats(
+                    [
+                        (f"{profile.row_count:,}", "Rows"),
+                        (str(profile.column_count), "Columns"),
+                        (f"{profile.memory_bytes / 1024:.1f}K", "Memory KB"),
+                    ]
+                ),
+            },
+            {
+                "title": "Type Distribution",
+                "kicker_html": pill_html("Inferred roles", "primary"),
+                "body_html": f"<p style='margin-top:0.35rem; line-height:2;'>{type_pills}</p>",
+            },
+            {
+                "title": "Missing Data",
+                "kicker_html": pill_html("Cell health", "primary"),
+                "body_html": missing_body,
+            },
+            {
+                "title": "Quality Warnings",
+                "kicker_html": pill_html("Hygiene", "primary"),
+                "body_html": warning_body,
+            },
+        ]
+    )
+
+    # Duplicate rows metric kept visible below the bento row
+    st.metric("Duplicate Rows", f"{profile.duplicate_row_count:,}")
 
     # Quality warnings callout
     if profile.quality_warnings:
-        with st.expander(f"⚠️ Quality Warnings ({len(profile.quality_warnings)})", expanded=True):
+        with st.expander(f"Quality Warnings ({len(profile.quality_warnings)})", expanded=True):
             for w in profile.quality_warnings:
                 st.warning(f"• {w}")
 
@@ -216,19 +294,33 @@ def render_dataset_inspection(dataset: DatasetSummary, service: DatasetService) 
             "Column Name": col.name,
             "Inferred Type": col.dtype,
             "Suggested Role": col.suggested_role.value,
-            "Missing Count": f"{col.null_count:,} ({col.null_percentage}%)",
-            "Unique Values": f"{col.unique_count:,}",
+            "Missing Count": col.null_count,
+            "Null %": col.null_percentage,
+            "Unique Values": col.unique_count,
             "Sample Values": ", ".join(col.sample_values[:4]),
             "Column Warnings": "; ".join(col.warnings) if col.warnings else "None",
         })
 
-    st.dataframe(col_data, use_container_width=True, hide_index=True)
+    st.dataframe(
+        col_data,
+        width='stretch',
+        hide_index=True,
+        column_config={
+            "Null %": st.column_config.ProgressColumn(
+                "Null %",
+                help="Share of missing cells in this column",
+                min_value=0.0,
+                max_value=100.0,
+                format="%.2f%%",
+            ),
+        },
+    )
 
     # Data Preview
     st.markdown("### Raw Table Preview")
     st.caption("First 10 rows loaded from immutable storage with verified SHA-256 integrity.")
     try:
         df = service.load_dataframe(dataset.id)
-        st.dataframe(df.head(10), use_container_width=True)
+        st.dataframe(df.head(10), width='stretch')
     except Exception as exc:
         st.error(f"Could not preview stored table: {exc}")

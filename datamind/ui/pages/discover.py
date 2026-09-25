@@ -15,6 +15,8 @@ from datamind.ui.components import (
     render_active_project_banner,
     render_header,
     render_service_error,
+    render_workflow_stepper,
+    style_plotly_figure,
 )
 from datamind.ui.navigation import NavigationContext
 
@@ -55,6 +57,7 @@ def render_discover_page() -> None:
         title="Algorithm Discovery & Educational Playground",
         subtitle="Inspect algorithm assumptions and run real seeded two-dimensional models",
     )
+    render_workflow_stepper("Learn")
     active_project = NavigationContext.get_active_project()
     render_active_project_banner(active_project)
 
@@ -138,6 +141,7 @@ def render_discover_page() -> None:
                 subset = points[points["label"] == label]
                 figure.add_scatter(x=subset["x"], y=subset["y"], mode="markers", name=f"Class {label}")
             figure.update_layout(title=f"Synthetic playground — {result.kind}")
+            figure = style_plotly_figure(figure)
         else:
             figure = px.scatter(
                 points,
@@ -146,7 +150,8 @@ def render_discover_page() -> None:
                 color="label",
                 title="Synthetic playground — fitted K-Means assignments",
             )
-        st.plotly_chart(figure, use_container_width=True)
+            figure = style_plotly_figure(figure)
+        st.plotly_chart(figure, width='stretch')
         st.write(result.explanation)
         st.warning(result.limitation)
         st.caption(f"Synthetic demonstration only • seed {result.seed} • parameters {result.parameters}")

@@ -10,7 +10,13 @@ import streamlit as st
 
 from datamind.services.clustering import ClusteringService
 from datamind.services.datasets import DatasetService
-from datamind.ui.components import render_active_project_banner, render_header, render_service_error
+from datamind.ui.components import (
+    render_active_project_banner,
+    render_header,
+    render_service_error,
+    render_workflow_stepper,
+    style_plotly_figure,
+)
 from datamind.ui.navigation import NavigationContext
 
 
@@ -20,6 +26,7 @@ def render_clustering_page() -> None:
         title="Unsupervised Clustering Lab",
         subtitle="Fit K-Means in standardized feature space and inspect bounded exploratory diagnostics",
     )
+    render_workflow_stepper("Learn")
     active_project = NavigationContext.get_active_project()
     render_active_project_banner(active_project)
     if not active_project:
@@ -100,28 +107,37 @@ def render_clustering_page() -> None:
         [{"cluster_id": str(label), "rows": count} for label, count in sorted(result.cluster_sizes.items())]
     )
     st.plotly_chart(
-        px.bar(sizes, x="cluster_id", y="rows", title="Cluster sizes — fitted K-Means labels"),
-        use_container_width=True,
+        style_plotly_figure(
+            px.bar(sizes, x="cluster_id", y="rows", title="Cluster sizes — fitted K-Means labels"),
+            "Cluster sizes — fitted K-Means labels",
+        ),
+        width='stretch',
     )
 
     elbow = pd.DataFrame(result.elbow_points)
     st.plotly_chart(
-        px.line(elbow, x="k", y="inertia", markers=True, title="Elbow diagnostic — standardized modeling space"),
-        use_container_width=True,
+        style_plotly_figure(
+            px.line(elbow, x="k", y="inertia", markers=True, title="Elbow diagnostic — standardized modeling space"),
+            "Elbow diagnostic — standardized modeling space",
+        ),
+        width='stretch',
     )
     st.caption("The elbow sweep is a diagnostic artifact, not multiple trials and not a guaranteed optimal-k selector.")
 
     projection = pd.DataFrame(result.pca_coordinates, columns=["PC1", "PC2"])
     projection["cluster_id"] = [str(value) for value in result.cluster_labels]
     st.plotly_chart(
-        px.scatter(
-            projection,
-            x="PC1",
-            y="PC2",
-            color="cluster_id",
-            title="PCA display projection — visualization only",
+        style_plotly_figure(
+            px.scatter(
+                projection,
+                x="PC1",
+                y="PC2",
+                color="cluster_id",
+                title="PCA display projection — visualization only",
+            ),
+            "PCA display projection — visualization only",
         ),
-        use_container_width=True,
+        width='stretch',
     )
     variance = sum(result.pca_explained_variance)
     st.caption(
