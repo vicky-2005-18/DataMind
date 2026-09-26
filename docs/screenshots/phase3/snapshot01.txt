@@ -1,0 +1,197 @@
+uid=1_1 RootWebArea "DataMind — Interactive ML Lab" focusable url="http://127.0.0.1:8502/"
+  uid=1_2 button "keyboard_double_arrow_left" focusable invalid="false"
+  uid=1_3 StaticText "DM"
+  uid=1_4 StaticText "DataMind"
+  uid=1_5 StaticText "Interactive machine learning workspace"
+  uid=1_6 StaticText "CURRENT WORKSPACE"
+  uid=1_7 combobox "Active Project" autocomplete="list" editable="plaintext" expandable focusable hasPopup="listbox" invalid="false" settable value="M6 Evidence 0ad59c1d"
+  uid=1_8 button "Open" expandable focusable hasPopup="listbox" invalid="false"
+  uid=1_9 StaticText "WORKFLOW STAGE"
+  uid=1_10 StaticText "Workspace"
+  uid=1_11 StaticText "Workspace → Prepare → Model → Deliver → Learn"
+  uid=1_12 radio "Home" checked="false" focusable invalid="false"
+  uid=1_13 StaticText "Home"
+  uid=1_14 radio "Datasets" checked="false" focusable invalid="false"
+  uid=1_15 StaticText "Datasets"
+  uid=1_16 radio "Explore" checked="false" focusable invalid="false"
+  uid=1_17 StaticText "Explore"
+  uid=1_18 radio "Experiment" checked="false" focusable invalid="false"
+  uid=1_19 StaticText "Experiment"
+  uid=1_20 radio "Compare" checked="false" focusable invalid="false"
+  uid=1_21 StaticText "Compare"
+  uid=1_22 radio "Predict" checked="false" focusable invalid="false"
+  uid=1_23 StaticText "Predict"
+  uid=1_24 radio "Explain & Export" checked="true" focusable focused invalid="false"
+  uid=1_25 StaticText "Explain & Export"
+  uid=1_26 radio "Clustering" checked="false" focusable invalid="false"
+  uid=1_27 StaticText "Clustering"
+  uid=1_28 radio "Discover" checked="false" focusable invalid="false"
+  uid=1_29 StaticText "Discover"
+  uid=1_30 StaticText "Local runtime · 127.0.0.1"
+  uid=1_31 banner
+    uid=1_32 button "Deploy" focusable invalid="false"
+    uid=1_33 button "Main menu" expandable focusable hasPopup="menu" invalid="false"
+  uid=1_34 generic focusable
+    uid=1_35 StaticText "DATAMIND AI LABORATORY"
+    uid=1_36 heading "Explain & Export" level="1"
+    uid=1_37 StaticText "Inspect a bounded development diagnostic and download stored experiment evidence"
+    uid=1_38 StaticText "STAGE 01"
+    uid=1_39 StaticText "Home"
+    uid=1_40 StaticText "Workspace"
+    uid=1_41 StaticText "Select or initialize your project environment"
+    uid=1_42 StaticText "STAGE 02"
+    uid=1_43 StaticText "Data"
+    uid=1_44 StaticText "Prepare"
+    uid=1_45 StaticText "Profile schemas, check hygiene & create splits"
+    uid=1_46 StaticText "STAGE 03"
+    uid=1_47 StaticText "Train"
+    uid=1_48 StaticText "Model"
+    uid=1_49 StaticText "Run cross-validation & benchmark candidates"
+    uid=1_50 StaticText "STAGE 04"
+    uid=1_51 StaticText "Inference"
+    uid=1_52 StaticText "Deliver"
+    uid=1_53 StaticText "Simulate predictions & export audit bundles"
+    uid=1_54 StaticText "STAGE 05"
+    uid=1_55 StaticText "Studio"
+    uid=1_56 StaticText "Learn"
+    uid=1_57 StaticText "Explore K-Means clusters & algorithm sandboxes"
+    uid=1_58 StaticText "Active"
+    uid=1_59 StaticText "M6 Evidence 0ad59c1d"
+    uid=1_60 StaticText "ID: 0e42b30d"
+    uid=1_61 combobox "Saved experiment" autocomplete="list" editable="plaintext" expandable focusable hasPopup="listbox" invalid="false" settable value="M6 Iris three-model evidence [0d3203c3]"
+    uid=1_62 button "Open" expandable focusable hasPopup="listbox" invalid="false"
+    uid=1_63 StaticText "M6 Iris three-model evidence"
+    uid=1_64 link "Link to heading" focusable url="http://127.0.0.1:8502/#m6-iris-three-model-evidence"
+    uid=1_65 StaticText "Task: classification • primary CV metric: f1_macro • saved seed: 42"
+    uid=1_66 StaticText "0"
+    uid=1_67 StaticText "0.1"
+    uid=1_68 StaticText "0.2"
+    uid=1_69 StaticText "sepal_width"
+    uid=1_70 StaticText "sepal_length"
+    uid=1_71 StaticText "petal_length"
+    uid=1_72 StaticText "petal_width"
+    uid=1_73 StaticText "impact"
+    uid=1_74 StaticText "increases score"
+    uid=1_75 StaticText "Development rows — original-feature permutation importance"
+    uid=1_76 StaticText "mean_importance"
+    uid=1_77 StaticText "feature"
+    uid=1_78 button "Download plot as a PNG" focusable invalid="false"
+    uid=1_79 button "Zoom" focusable invalid="false"
+    uid=1_80 button "Pan" focusable invalid="false"
+    uid=1_81 button "Zoom in" focusable invalid="false"
+    uid=1_82 button "Zoom out" focusable invalid="false"
+    uid=1_83 button "Autoscale" focusable invalid="false"
+    uid=1_84 button "Reset axes" focusable invalid="false"
+    uid=1_85 button "Fullscreen" focusable invalid="false"
+    uid=1_86 button "Show/hide columns" focusable invalid="false"
+    uid=1_87 button "Download as CSV" focusable invalid="false"
+    uid=1_88 button "Search" focusable invalid="false"
+    uid=1_89 button "Fullscreen" focusable invalid="false"
+    uid=1_90 Canvas focusable
+      uid=1_91 columnheader "feature" focusable selectable
+        uid=1_92 StaticText "feature"
+      uid=1_93 columnheader "mean_importance" focusable selectable
+        uid=1_94 StaticText "mean_importance"
+      uid=1_95 columnheader "std_importance" focusable selectable
+        uid=1_96 StaticText "std_importance"
+      uid=1_97 columnheader "n_repeats" focusable selectable
+        uid=1_98 StaticText "n_repeats"
+      uid=1_99 columnheader "n_samples" focusable selectable
+        uid=1_100 StaticText "n_samples"
+      uid=1_101 gridcell "sepal_width" focusable readonly selectable
+        uid=1_102 StaticText "sepal_width"
+      uid=1_103 gridcell "0.028014777657218846" focusable readonly selectable
+        uid=1_104 StaticText "0.028014777657218846"
+      uid=1_105 gridcell "0.011380031711040114" focusable readonly selectable
+        uid=1_106 StaticText "0.011380031711040114"
+      uid=1_107 gridcell "5" focusable readonly selectable
+        uid=1_108 StaticText "5"
+      uid=1_109 gridcell "120" focusable readonly selectable
+        uid=1_110 StaticText "120"
+      uid=1_111 gridcell "sepal_length" focusable readonly selectable
+        uid=1_112 StaticText "sepal_length"
+      uid=1_113 gridcell "0.06024551268695351" focusable readonly selectable
+        uid=1_114 StaticText "0.06024551268695351"
+      uid=1_115 gridcell "0.013517198415736361" focusable readonly selectable
+        uid=1_116 StaticText "0.013517198415736361"
+      uid=1_117 gridcell "5" focusable readonly selectable
+        uid=1_118 StaticText "5"
+      uid=1_119 gridcell "120" focusable readonly selectable
+        uid=1_120 StaticText "120"
+      uid=1_121 gridcell "petal_length" focusable readonly selectable
+        uid=1_122 StaticText "petal_length"
+      uid=1_123 gridcell "0.1812570793259722" focusable readonly selectable
+        uid=1_124 StaticText "0.1812570793259722"
+      uid=1_125 gridcell "0.024804968389723254" focusable readonly selectable
+        uid=1_126 StaticText "0.024804968389723254"
+      uid=1_127 gridcell "5" focusable readonly selectable
+        uid=1_128 StaticText "5"
+      uid=1_129 gridcell "120" focusable readonly selectable
+        uid=1_130 StaticText "120"
+      uid=1_131 gridcell "petal_width" focusable readonly selectable
+        uid=1_132 StaticText "petal_width"
+      uid=1_133 gridcell "0.2385858269279803" focusable readonly selectable
+        uid=1_134 StaticText "0.2385858269279803"
+      uid=1_135 gridcell "0.031867382926837676" focusable readonly selectable
+        uid=1_136 StaticText "0.031867382926837676"
+      uid=1_137 gridcell "5" focusable readonly selectable
+        uid=1_138 StaticText "5"
+      uid=1_139 gridcell "120" focusable readonly selectable
+        uid=1_140 StaticText "120"
+    uid=1_141 StaticText "Top development-set drivers:"
+    uid=1_142 StaticText "petal_width"
+    uid=1_143 StaticText "(raises development score by 0.2386 on average) •"
+    uid=1_144 StaticText "petal_length"
+    uid=1_145 StaticText "(raises development score by 0.1813 on average) •"
+    uid=1_146 StaticText "sepal_length"
+    uid=1_147 StaticText "(raises development score by 0.0602 on average)"
+    uid=1_148 StaticText "Development-set diagnostic only: this is not independent evaluation and not causal evidence. Correlated features can obscure importance, and negative values are legitimate."
+    uid=1_149 StaticText "Holdout — finalized"
+    uid=1_150 link "Link to heading" focusable url="http://127.0.0.1:8502/#holdout-finalized"
+    uid=1_151 StaticText "Holdout previously exposed: No"
+    uid=1_152 button "Show/hide columns" focusable invalid="false"
+    uid=1_153 button "Download as CSV" focusable invalid="false"
+    uid=1_154 button "Search" focusable invalid="false"
+    uid=1_155 button "Fullscreen" focusable invalid="false"
+    uid=1_156 Canvas focusable
+      uid=1_157 columnheader "id" focusable selectable
+        uid=1_158 StaticText "id"
+      uid=1_159 columnheader "trial_id" focusable selectable
+        uid=1_160 StaticText "trial_id"
+      uid=1_161 gridcell "cc1c6188-29c1-4048-9403-7f8ef96dac58_f1_macro_-1" focusable readonly selectable
+        uid=1_162 StaticText "cc1c6188-29c1-4048-9403-7f8ef96dac58_f1_macro_-1"
+      uid=1_163 gridcell "cc1c6188-29c1-4048-9403-7f8ef96dac58" focusable readonly selectable
+        uid=1_164 StaticText "cc1c6188-29c1-4048-9403-7f8ef96dac58"
+      uid=1_165 gridcell "cc1c6188-29c1-4048-9403-7f8ef96dac58_accuracy_-1" focusable readonly selectable
+        uid=1_166 StaticText "cc1c6188-29c1-4048-9403-7f8ef96dac58_accuracy_-1"
+      uid=1_167 gridcell "cc1c6188-29c1-4048-9403-7f8ef96dac58" focusable readonly selectable
+        uid=1_168 StaticText "cc1c6188-29c1-4048-9403-7f8ef96dac58"
+      uid=1_169 gridcell "cc1c6188-29c1-4048-9403-7f8ef96dac58_balanced_accuracy_-1" focusable readonly selectable
+        uid=1_170 StaticText "cc1c6188-29c1-4048-9403-7f8ef96dac58_balanced_accuracy_-1"
+      uid=1_171 gridcell "cc1c6188-29c1-4048-9403-7f8ef96dac58" focusable readonly selectable
+        uid=1_172 StaticText "cc1c6188-29c1-4048-9403-7f8ef96dac58"
+      uid=1_173 gridcell "cc1c6188-29c1-4048-9403-7f8ef96dac58_precision_macro_-1" focusable readonly selectable
+        uid=1_174 StaticText "cc1c6188-29c1-4048-9403-7f8ef96dac58_precision_macro_-1"
+      uid=1_175 gridcell "cc1c6188-29c1-4048-9403-7f8ef96dac58" focusable readonly selectable
+        uid=1_176 StaticText "cc1c6188-29c1-4048-9403-7f8ef96dac58"
+      uid=1_177 gridcell "cc1c6188-29c1-4048-9403-7f8ef96dac58_recall_macro_-1" focusable readonly selectable
+        uid=1_178 StaticText "cc1c6188-29c1-4048-9403-7f8ef96dac58_recall_macro_-1"
+      uid=1_179 gridcell "cc1c6188-29c1-4048-9403-7f8ef96dac58" focusable readonly selectable
+        uid=1_180 StaticText "cc1c6188-29c1-4048-9403-7f8ef96dac58"
+      uid=1_181 gridcell "cc1c6188-29c1-4048-9403-7f8ef96dac58_roc_auc_-1" focusable readonly selectable
+        uid=1_182 StaticText "cc1c6188-29c1-4048-9403-7f8ef96dac58_roc_auc_-1"
+      uid=1_183 gridcell "cc1c6188-29c1-4048-9403-7f8ef96dac58" focusable readonly selectable
+        uid=1_184 StaticText "cc1c6188-29c1-4048-9403-7f8ef96dac58"
+    uid=1_185 StaticText "Evidence downloads"
+    uid=1_186 link "Link to heading" focusable url="http://127.0.0.1:8502/#evidence-downloads"
+    uid=1_187 StaticText "All files are generated from saved records. Raw training data is excluded by default."
+    uid=1_188 StaticText "Human-readable"
+    uid=1_189 StaticText "Reports"
+    uid=1_190 StaticText "Narrative summaries generated from persisted experiment records."
+    uid=1_191 button "HTML report" focusable invalid="false"
+    uid=1_192 button "Markdown report" focusable invalid="false"
+    uid=1_193 StaticText "Artifacts"
+    uid=1_194 StaticText "Reproducibility archives"
+    uid=1_195 StaticText "Bundles with the champion pipeline, schema, and evidence for re-running offline."
+    uid=1_196 button "Model ZIP" focusable invalid="false"
+    uid=1_197 button "Experiment ZIP" focusable invalid="false"

@@ -219,6 +219,44 @@ def test_t22_submit_token_idempotency(iris_experiment):
     assert summary2.id == summary1.id, "Idempotent submit must return same experiment"
 
 
+def test_prepare_split_dedup_returns_persisted_split_id(iris_experiment):
+    """A re-prepared split must carry the already-persisted split id.
+
+    create_split_manifest generates a fresh split_id on every call while the
+    repository deduplicates rows on split_fingerprint; returning the fresh id
+    made save_experiment violate the experiments.split_id foreign key on any
+    later run that reuses an existing split config.
+    """
+    svc, summary1, dataset, project, df = iris_experiment
+
+    view = svc.prepare_modeling_view(
+        dataset_id=dataset.id,
+        task=TaskType.CLASSIFICATION,
+        target="species",
+        numeric_features=[c for c in df.columns if c != "species" and pd.api.types.is_numeric_dtype(df[c])],
+        categorical_features=[],
+    )
+    manifest2 = svc.prepare_split(dataset_id=dataset.id, view=view, test_fraction=0.20, cv_folds=3, random_seed=42)
+    assert manifest2.split_id == summary1.split_id, "Deduplicated split must reuse the persisted id"
+
+    # A different experiment on the same split must persist without a FK error
+    summary2 = svc.run_supervised_experiment(
+        experiment_name="Second run on cached split",
+        project_id=project.id,
+        dataset_id=dataset.id,
+        view=view,
+        manifest=manifest2,
+        algorithm_configs=[AlgorithmConfig(algorithm_id="logistic_regression")],
+        seed=42,
+    )
+    assert summary2.id != summary1.id
+    assert summary2.split_id == summary1.split_id
+    assert summary2.status == "completed"
+
+    reloaded = svc.get_experiment(summary2.id)
+    assert reloaded is not None and reloaded.split_id == summary1.split_id
+
+
 # ── T23: Crash recovery / workspace lock guard ────────────────────────────
 
 

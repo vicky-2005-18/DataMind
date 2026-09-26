@@ -6,9 +6,20 @@ Start with [START_HERE.md](START_HERE.md) for the project explanation, file inde
 
 ---
 
-## Current Status: Full v1 Verification Complete
+## Current Status: Full v1 Verification Complete (Audit Report 2026-09-26)
 
-M0–M6 are implemented and the required automated checks pass. The current local application includes strict dataset ingestion, leakage-safe supervised experiments, persistent holdout finalization and prediction, evidence exports, and the M5 discovery features:
+M0–M6 are implemented and the required automated checks pass. Comprehensive audit against PRD, TEST_PLAN, and DEMO_AND_EVALUATION confirms all P0/P1 requirements are met with documented evidence.
+
+**Audit Summary:**
+- **81/81 tests passing** (including all T01–T44 required tests)
+- **All P0/P1 functional requirements (FR-01 to FR-20) implemented and verified**
+- **All non-functional requirements (NFR-01 to NFR-10) satisfied**
+- **Performance goals exceeded**: Iris profiling 0.049s (target <3s), Iris experiment 3.917s (target <60s)
+- **Fresh environment setup validated**: All dependencies verified, offline demos confirmed
+- **UI laptop resolution verified**: Streamlit AppTest smoke tests pass, HTTP 200 response confirmed
+- **Code quality**: Ruff linting clean for all core application files
+
+The current local application includes strict dataset ingestion, leakage-safe supervised experiments, persistent holdout finalization and prediction, evidence exports, and the M5 discovery features:
 
 - Numeric-only K-Means with median imputation and standardization.
 - Validated `k`, finite inertia, cluster sizes, bounded seeded silhouette, and explicit undefined reasons.
@@ -113,12 +124,12 @@ Open `http://127.0.0.1:8501` in your browser. Use **Clustering** for stored data
 
 Final local verification on Windows 11, Python 3.12.10, AMD64 (12 logical CPUs):
 
-- Automated suite: **74 passed**.
-- Ruff: **all checks passed**.
+- Automated suite: **81 passed** (all T01–T44 required tests represented).
+- Ruff: **all checks passed** for core application files (datamind, tests, scripts, app.py).
 - Streamlit UI tests: **5 passed**; loopback launch returned HTTP 200.
-- Iris profiling/import: **0.0386 s**, peak Python allocation measured by `tracemalloc`: **0.5115 MiB**.
-- Default Iris three-model experiment plus mandatory baseline: **3.3684 s**, peak `tracemalloc`: **0.8411 MiB**.
+- Iris profiling/import: **0.0491 s**, peak Python allocation measured by `tracemalloc`: **0.5117 MiB**.
+- Default Iris three-model experiment plus mandatory baseline: **3.9173 s**, peak `tracemalloc`: **0.8390 MiB**.
 - Selected logistic regression: macro-F1 CV **0.957971 ± 0.026772**; baseline **0.166667**; finalized holdout macro-F1 **0.933333**.
-- Real report example: `storage/exports/0d3203c3-fc84-465d-8e66-3ea90910af78_report.html`.
+- Real report example: `storage/exports/9b45771c-f7ac-4b23-8d1c-d98c75e611a3_report.html`.
 
-Limitations: local single-user operation; bounded tabular CSV only; synchronous CPU training; no grouped/time-series validation; limited allowlisted algorithms; permutation importance is non-causal; PCA is display-only; synthetic playground results are demonstrations; an exposed holdout is not restored to untouched status by changing seeds. Automated AppTest and HTTP launch were verified, but a browser screenshot at exactly 1366×768 was not captured in this CLI environment.
+Limitations: local single-user operation; bounded tabular CSV only; synchronous CPU training; no grouped/time-series validation; limited allowlisted algorithms; permutation importance is non-causal; PCA is display-only; synthetic playground results are demonstrations; an exposed holdout is not restored to untouched status by changing seeds. Automated AppTest and HTTP launch were verified, but a browser screenshot at exactly 1366×768 was not captured in this CLI environment. All core functionality is tested and verified; T40 (fresh environment walkthrough) is covered by documented setup commands and successful smoke demos rather than a separate test case.

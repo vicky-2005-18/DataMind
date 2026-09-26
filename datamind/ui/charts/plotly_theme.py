@@ -7,6 +7,7 @@ preventing positioning bugs and ensuring professional appearance.
 from __future__ import annotations
 
 import plotly.graph_objects as go
+
 from datamind.ui.theme import Theme
 
 

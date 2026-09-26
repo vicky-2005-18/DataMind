@@ -27,9 +27,9 @@ from datamind.ui.components import (
 from datamind.ui.navigation import NavigationContext
 
 QUICK_START_DEMOS = [
-    (DemoDatasetKind.IRIS, "Iris Classification (Demo)", "Iris Classification Demo"),
-    (DemoDatasetKind.SYNTHETIC_REGRESSION, "Synthetic Regression (Demo)", "Synthetic Regression Demo"),
-    (DemoDatasetKind.SYNTHETIC_BLOBS, "Synthetic Blobs Clustering (Demo)", "Synthetic Blobs Clustering Demo"),
+    (DemoDatasetKind.IRIS, "Iris Classification Demo"),
+    (DemoDatasetKind.SYNTHETIC_REGRESSION, "Synthetic Regression Demo"),
+    (DemoDatasetKind.SYNTHETIC_BLOBS, "Synthetic Blobs Clustering Demo"),
 ]
 
 
@@ -54,12 +54,11 @@ def _relative_time(iso_timestamp: str) -> str:
         return iso_timestamp[:10]
 
 
-def _load_demo(kind: DemoDatasetKind, display_name: str, project_id: str) -> None:
+def _load_demo(kind: DemoDatasetKind, project_id: str) -> None:
     try:
         new_dataset = DatasetService().load_demo(
             project_id=project_id,
-            kind=kind,
-            display_name=display_name,
+            demo_kind=kind,
         )
         NavigationContext.set_active_dataset(new_dataset.id)
         st.success(f"Loaded **{new_dataset.display_name}** successfully!")
@@ -170,10 +169,10 @@ def render_home_page() -> None:
             st.markdown("#### Quick-Start: Inject a Demo Dataset")
             st.caption("Jump straight into experimentation without preparing your own CSV.")
             demo_cols = st.columns(3)
-            for column, (kind, display_name, label) in zip(demo_cols, QUICK_START_DEMOS):
+            for column, (kind, label) in zip(demo_cols, QUICK_START_DEMOS):
                 with column:
                     if st.button(label, key=f"demo_{kind.value}", width='stretch'):
-                        _load_demo(kind, display_name, active_project.id)
+                        _load_demo(kind, active_project.id)
         return
 
     if not experiments:

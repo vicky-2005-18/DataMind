@@ -20,6 +20,7 @@ from datamind.ui.pages.explain_export import render_explain_export_page
 from datamind.ui.pages.explore import render_explore_page
 from datamind.ui.pages.home import render_home_page
 from datamind.ui.pages.predict import render_predict_page
+from datamind.ui.theme import Theme
 
 # Set top-level page configuration
 st.set_page_config(
@@ -43,6 +44,8 @@ def main() -> None:
     """Main application execution router."""
     bootstrap_application()
     apply_global_styles()
+    # Apply theme CSS variables
+    st.markdown(Theme.get_css_variables(), unsafe_allow_html=True)
 
     pages = {
         "Home": render_home_page,

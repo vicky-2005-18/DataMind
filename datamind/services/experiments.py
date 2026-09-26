@@ -103,8 +103,11 @@ class ExperimentService:
             cv_folds=cv_folds,
             random_seed=random_seed,
         )
-        # Persist (INSERT OR IGNORE handles deduplication by fingerprint)
-        self.split_repo.create(manifest, view.row_policy)
+        # create() deduplicates on split_fingerprint and returns the persisted
+        # split id; adopting it keeps the experiment's split reference valid.
+        persisted_id = self.split_repo.create(manifest, view.row_policy)
+        if persisted_id != manifest.split_id:
+            manifest = manifest.model_copy(update={"split_id": persisted_id})
         return manifest
 
     def run_supervised_experiment(

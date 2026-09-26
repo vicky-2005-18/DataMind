@@ -6,6 +6,7 @@ Provides consistent empty, loading, and error states across all pages.
 from __future__ import annotations
 
 import streamlit as st
+
 from datamind.ui.theme import Theme
 
 

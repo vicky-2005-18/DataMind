@@ -10,12 +10,13 @@ maxUploadSize = 10
 gatherUsageStats = false
 
 [theme]
-primaryColor = "#4f46e5"
-backgroundColor = "#f6f7fb"
-secondaryBackgroundColor = "#ffffff"
-textColor = "#172033"
+base = "dark"
+primaryColor = "#6366F1"
+backgroundColor = "#0B0F19"
+secondaryBackgroundColor = "#111827"
+textColor = "#F9FAFB"
 font = "sans serif"
 baseRadius = "medium"
 buttonRadius = "medium"
-borderColor = "#dde2ea"
+borderColor = "#1E293B"
 showWidgetBorder = true

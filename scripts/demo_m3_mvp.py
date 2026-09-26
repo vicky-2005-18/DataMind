@@ -105,14 +105,14 @@ exp1_again = svc.run_supervised_experiment(
     seed=42,
 )
 assert exp1_again.id == exp1.id, "Idempotent submit returned different experiment!"
-print("    ✅ T22 Idempotency verified: second submit returned same experiment ID")
+print("    [OK] T22 Idempotency verified: second submit returned same experiment ID")
 
 # ── 4. Persistence / restart verification ───────────────────────────────────
 
 fresh_repo = ExperimentRepository(settings.db_path)
 reloaded = fresh_repo.get_by_id(exp1.id)
 assert reloaded is not None and reloaded.id == exp1.id
-print(f"\n[5] ✅ T24 Persistence: experiment '{reloaded.name}' reloaded from SQLite after simulated restart")
+print(f"\n[5] [OK] T24 Persistence: experiment '{reloaded.name}' reloaded from SQLite after simulated restart")
 print(f"    Trials: {len(reloaded.trials)} | Champion trial_id: {reloaded.selected_trial_id[:8]}")
 
 # ── 5. Guarded recovery reconcile ───────────────────────────────────────────
@@ -134,7 +134,7 @@ for m in eval1.metrics:
 # T25: Second finalize call → idempotent
 eval1b = svc.finalize_experiment(exp1.id)
 assert eval1b.id == eval1.id
-print("    ✅ T25 Idempotent finalization: same evaluation ID returned on second call")
+print("    [OK] T25 Idempotent finalization: same evaluation ID returned on second call")
 
 # ── 7. Run second experiment on same split (test T26 previously-exposed) ────
 
@@ -153,9 +153,9 @@ print(f"    Status: {exp2.status} | Champion: {exp2.selected_trial_id[:8]}")
 
 print("[9] Finalizing experiment 2 on same split...")
 eval2 = svc.finalize_experiment(exp2.id)
-print(f"    ⚠️  Holdout previously exposed: {eval2.holdout_previously_exposed}  (expected: True)")
+print(f"    WARNING: Holdout previously exposed: {eval2.holdout_previously_exposed}  (expected: True)")
 assert eval2.holdout_previously_exposed is True, "T26 FAIL: expected holdout_previously_exposed=True"
-print("    ✅ T26 Holdout exposure flag verified")
+print("    [OK] T26 Holdout exposure flag verified")
 
 # ── 8. Prediction: single row ────────────────────────────────────────────────
 
@@ -178,15 +178,15 @@ direct_pipeline = joblib.load(champion_path)
 direct_pred = direct_pipeline.predict(df[numeric_features].iloc[:5])
 service_batch = pred_svc.predict(experiment_id=exp1.id, input_df=df[numeric_features].iloc[:5])
 assert list(service_batch.predictions) == list(direct_pred)
-print("     ✅ T28 Model reload consistency: service predictions match direct joblib.load()")
+print("     [OK] T28 Model reload consistency: service predictions match direct joblib.load()")
 
 # T29: Schema validation
 print("\n[11] T29 Schema validation tests...")
 try:
     pred_svc.predict(experiment_id=exp1.id, input_df=df[numeric_features[:2]])
-    print("     ❌ Expected PREDICTION_SCHEMA_MISMATCH for missing columns")
+    print("     X Expected PREDICTION_SCHEMA_MISMATCH for missing columns")
 except ServiceError as e:
-    print(f"     ✅ Missing columns rejected: [{e.code.value}] {e.user_message[:60]}")
+    print(f"     [OK] Missing columns rejected: [{e.code.value}] {e.user_message[:60]}")
 
 # Batch prediction with CSV
 batch_input = df[numeric_features].head(10)
@@ -202,7 +202,7 @@ print("\n[13] Comparing experiment 1 and experiment 2 (compatible: same split)..
 comparison_svc = ComparisonService(experiment_service=svc)
 try:
     comparison = comparison_svc.compare([exp1.id, exp2.id])
-    print("     ✅ T27 Compatible comparison succeeded:")
+    print("     [OK] T27 Compatible comparison succeeded:")
     for row in comparison.table_rows:
         cv_str = f"{row['cv_mean']:.4f}" if row['cv_mean'] is not None else "N/A"
         print(f"     [{row['experiment_id'][:8]}] {row['experiment_name'][:40]} — CV: {cv_str}")
@@ -236,9 +236,9 @@ reg_exp = svc.run_supervised_experiment(
 
 try:
     comparison_svc.compare([exp1.id, reg_exp.id])
-    print("     ❌ Expected INCOMPATIBLE_COMPARISON error")
+    print("     X Expected INCOMPATIBLE_COMPARISON error")
 except ServiceError as e:
-    print(f"     ✅ T27 Incompatible comparison correctly rejected: [{e.code.value}]")
+    print(f"     [OK] T27 Incompatible comparison correctly rejected: [{e.code.value}]")
 
 # ── 11. Summary ──────────────────────────────────────────────────────────────
 
@@ -255,14 +255,14 @@ Summary:
   Holdout eval 2:      {eval2.id[:8]} (previously_exposed={eval2.holdout_previously_exposed})
 
 Tests verified:
-  T22 Submit token idempotency           ✅
-  T23 Crash recovery guarded             ✅
-  T24 Persistence across restart         ✅
-  T25 Idempotent finalization            ✅
-  T26 Holdout previously-exposed flag    ✅
-  T27 Incompatible comparison rejected   ✅
-  T28 Model reload consistency           ✅
-  T29 Schema validation                  ✅
+  T22 Submit token idempotency           [OK]
+  T23 Crash recovery guarded             [OK]
+  T24 Persistence across restart         [OK]
+  T25 Idempotent finalization            [OK]
+  T26 Holdout previously-exposed flag    [OK]
+  T27 Incompatible comparison rejected   [OK]
+  T28 Model reload consistency           [OK]
+  T29 Schema validation                  [OK]
   T31 Model unavailable handling         (covered in unit tests)
   T41 Cross-project rejection            (covered in unit tests)
   T42 Orphan artifact quarantine         (covered in unit tests)
