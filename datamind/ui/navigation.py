@@ -27,6 +27,10 @@ DATASET_DRAFT_KEYS = {
     "latest_experiment",
 }
 
+PROJECT_SELECT_KEY = "sidebar_project_select"
+# Selectbox widget state survives reruns, so programmatic changes must be pushed into it before instantiation or the sidebar sync reverts them.
+_PROJECT_SELECT_PENDING = "_project_select_pending"
+
 
 class NavigationContext:
     """Manages session state for the active project and current page."""
@@ -81,6 +85,7 @@ class NavigationContext:
             st.session_state["active_dataset_id"] = None
         st.session_state["active_project"] = project
         st.session_state["active_project_id"] = new_id
+        st.session_state[_PROJECT_SELECT_PENDING] = new_id
 
 
 PAGES: Dict[str, str] = {
@@ -132,6 +137,9 @@ def render_sidebar(pages: Dict[str, Callable[[], None]]) -> str:
         st.markdown('<p class="dm-stage">Current workspace</p>', unsafe_allow_html=True)
         if projects:
             options = {p.id: p.name for p in projects}
+            pending = st.session_state.pop(_PROJECT_SELECT_PENDING, None)
+            if pending is not None and pending in options:
+                st.session_state[PROJECT_SELECT_KEY] = pending
             selected_idx = 0
             if current_project and current_project.id in options:
                 selected_idx = list(options.keys()).index(current_project.id)
@@ -142,7 +150,7 @@ def render_sidebar(pages: Dict[str, Callable[[], None]]) -> str:
                 index=selected_idx,
                 format_func=lambda pid: options[pid],
                 label_visibility="collapsed",
-                key="sidebar_project_select",
+                key=PROJECT_SELECT_KEY,
             )
             if selected_id != (current_project.id if current_project else None):
                 NavigationContext.set_active_project(service.get_project(selected_id))
@@ -154,10 +162,17 @@ def render_sidebar(pages: Dict[str, Callable[[], None]]) -> str:
                 dataset = dataset_service.get_dataset(active_dataset_id)
                 if dataset:
                     st.markdown(
-                        f'<div class="dm-context">'
-                        f'<p class="dm-context-label">Active dataset</p>'
-                        f'<p class="dm-context-value">{dataset.display_name}</p>'
-                        f'</div>',
+                        f"""
+                        <div class="dm-context">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <p class="dm-context-label">Active dataset</p>
+                                <span class="dm-pill dm-pill-cyan" style="font-size: 0.68rem; padding: 0.15rem 0.45rem;">
+                                    {dataset.row_count:,}r · {dataset.column_count}c
+                                </span>
+                            </div>
+                            <p class="dm-context-value">{dataset.display_name}</p>
+                        </div>
+                        """,
                         unsafe_allow_html=True,
                     )
         else:
@@ -166,9 +181,19 @@ def render_sidebar(pages: Dict[str, Callable[[], None]]) -> str:
 
         st.divider()
 
-        st.markdown('<p class="dm-stage">Workflow</p>', unsafe_allow_html=True)
+        current_selection = st.session_state.get("selected_page", "Home")
+        current_group = PAGE_GROUP.get(current_selection, "Workspace")
+
         st.markdown(
-            '<p class="dm-nav-groups">Workspace → Prepare → Model → Deliver → Learn</p>',
+            f"""
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                <span class="dm-stage" style="margin: 0;">Workflow Stage</span>
+                <span class="dm-pill dm-pill-primary">{current_group}</span>
+            </div>
+            <p class="dm-nav-groups" style="font-size: 0.72rem; color: var(--dm-muted); margin-bottom: 0.5rem;">
+                Workspace → Prepare → Model → Deliver → Learn
+            </p>
+            """,
             unsafe_allow_html=True,
         )
 

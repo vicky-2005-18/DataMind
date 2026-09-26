@@ -102,7 +102,7 @@ html, body, [class*="css"]:not(svg):not(svg *) {
 }
 
 /* Additional protection: Force Plotly SVG text to use system fonts only */
-svg text, .plotly svg text, [class*="plotly"] text, 
+svg text, .plotly svg text, [class*="plotly"] text,
 .g svg text, .js-plotly-plot text, .plotly .tooltip text {
   font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
 }
@@ -125,7 +125,7 @@ svg text, .plotly svg text, [class*="plotly"] text,
 }
 
 /* Ensure Plotly containers don't interfere with tooltip positioning */
-.js-plotly-plot, .plotly, .js-plotly-plot .plotly, 
+.js-plotly-plot, .plotly, .js-plotly-plot .plotly,
 [data-testid="stPlotlyChart"] {
   position: relative !important;
   transform: none !important;
@@ -1285,7 +1285,7 @@ def render_service_error(error: Exception) -> None:
 
 def render_loading_state(message: str, elapsed: Optional[float] = None) -> None:
     """Render a standardized loading state with optional elapsed time display.
-    
+
     Args:
         message: The loading message to display
         elapsed: Optional elapsed time in seconds to show progress
@@ -1299,7 +1299,7 @@ def render_loading_state(message: str, elapsed: Optional[float] = None) -> None:
 
 def render_error_state(message: str, recovery_hint: Optional[str] = None) -> None:
     """Render a standardized error state for non-service errors.
-    
+
     Args:
         message: The error message to display
         recovery_hint: Optional hint for how to recover from the error
