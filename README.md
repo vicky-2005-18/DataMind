@@ -8,7 +8,7 @@ Start with [START_HERE.md](START_HERE.md) for the project explanation, file inde
 
 ## Current Status: Full v1 Verification Complete (Audit Report 2026-09-26)
 
-**⚠️ Important for Fresh Clones**: After cloning, either run `.\setup_datamind.ps1` (recommended) or manually create `.env` by running `Copy-Item .env.example .env`. The `.env` file is gitignored for security reasons.
+**⚠️ Important for Fresh Clones**: After cloning, either run `.\setup_datamind.ps1` (recommended) or manually create `.env` by running `Copy-Item .env.example .env`. The `.env` file is gitignored for security reasons. The setup scripts also automatically clean up any existing `storage/` directory to prevent issues from ZIP downloads.
 
 M0–M6 are implemented and the required automated checks pass. Comprehensive audit against PRD, TEST_PLAN, and DEMO_AND_EVALUATION confirms all P0/P1 requirements are met with documented evidence.
 

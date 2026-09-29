@@ -41,6 +41,7 @@ streamlit run app.py
   - Upgrades pip
   - Installs all project dependencies
   - **Automatically creates .env file from .env.example** (fixes missing file issue on fresh clones)
+  - **Cleans up any existing storage directory** (removes stale data from ZIP downloads)
 
 ### `start_datamind.ps1`
 - **Purpose**: Start DataMind with full checks
@@ -49,6 +50,8 @@ streamlit run app.py
   - Checks Python installation
   - Verifies correct directory
   - Installs/updates dependencies if needed
+  - **Cleans up any existing storage directory** (removes stale data from ZIP downloads)
+  - **Automatically creates .env file if missing**
   - Starts the application
 
 ### `start_datamind_simple.ps1`

@@ -49,6 +49,13 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "====================================" -ForegroundColor Green
     Write-Host ""
     
+    # Clean up any existing storage directory (from ZIP downloads or previous runs)
+    if (Test-Path "storage") {
+        Write-Host "Removing existing storage directory..." -ForegroundColor Yellow
+        Remove-Item -Path "storage" -Recurse -Force
+        Write-Host "Storage directory cleaned!" -ForegroundColor Green
+    }
+    
     # Create .env file from .env.example if it doesn't exist
     if (-not (Test-Path ".env")) {
         if (Test-Path ".env.example") {
