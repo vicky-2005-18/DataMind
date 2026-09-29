@@ -34,12 +34,13 @@ streamlit run app.py
 ## Available Scripts
 
 ### `setup_datamind.ps1`
-- **Purpose**: Install all required dependencies
+- **Purpose**: Install all required dependencies and configure environment
 - **When to use**: First time setup or if you encounter dependency issues
 - **What it does**:
   - Checks Python installation
   - Upgrades pip
   - Installs all project dependencies
+  - **Automatically creates .env file from .env.example** (fixes missing file issue on fresh clones)
 
 ### `start_datamind.ps1`
 - **Purpose**: Start DataMind with full checks

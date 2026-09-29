@@ -43,6 +43,33 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "Dependencies installed/verified." -ForegroundColor Green
 Write-Host ""
 
+# Create .env file from .env.example if it doesn't exist
+if (-not (Test-Path ".env")) {
+    if (Test-Path ".env.example") {
+        Write-Host "Creating .env file from .env.example..." -ForegroundColor Yellow
+        Copy-Item ".env.example" ".env"
+        Write-Host ".env file created successfully!" -ForegroundColor Green
+    } else {
+        Write-Host "WARNING: .env.example not found. Creating minimal .env file..." -ForegroundColor Yellow
+        @"
+DATAMIND_STORAGE_DIR=./storage
+DATAMIND_LOG_LEVEL=INFO
+DATAMIND_MAX_UPLOAD_MIB=10
+DATAMIND_MAX_ROWS=20000
+DATAMIND_MAX_COLUMNS=100
+DATAMIND_DEFAULT_SEED=42
+OMP_NUM_THREADS=1
+OPENBLAS_NUM_THREADS=1
+MKL_NUM_THREADS=1
+"@ | Out-File -FilePath ".env" -Encoding utf8
+        Write-Host "Minimal .env file created!" -ForegroundColor Green
+    }
+} else {
+    Write-Host ".env file already exists. Skipping creation." -ForegroundColor Green
+}
+
+Write-Host ""
+
 # Start the Streamlit application
 Write-Host "Starting DataMind..." -ForegroundColor Green
 Write-Host "The application will open in your default browser." -ForegroundColor Cyan

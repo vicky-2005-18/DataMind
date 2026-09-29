@@ -8,6 +8,8 @@ Start with [START_HERE.md](START_HERE.md) for the project explanation, file inde
 
 ## Current Status: Full v1 Verification Complete (Audit Report 2026-09-26)
 
+**⚠️ Important for Fresh Clones**: After cloning, either run `.\setup_datamind.ps1` (recommended) or manually create `.env` by running `Copy-Item .env.example .env`. The `.env` file is gitignored for security reasons.
+
 M0–M6 are implemented and the required automated checks pass. Comprehensive audit against PRD, TEST_PLAN, and DEMO_AND_EVALUATION confirms all P0/P1 requirements are met with documented evidence.
 
 **Audit Summary:**
@@ -50,7 +52,21 @@ The current local application includes strict dataset ingestion, leakage-safe su
 
 From the project root directory:
 
-### 1. Environment Activation & Dependencies
+### Quick Start (Recommended)
+
+```powershell
+# Run the automated setup script (handles everything including .env creation)
+.\setup_datamind.ps1
+
+# Start the application
+.\start_datamind.ps1
+```
+
+### Manual Setup (Alternative)
+
+If you prefer manual setup:
+
+#### 1. Environment Activation & Dependencies
 ```powershell
 # Create virtual environment
 py -3.12 -m venv .venv
@@ -62,7 +78,7 @@ py -3.12 -m venv .venv
 # Install datamind in editable mode
 .\.venv\Scripts\python.exe -m pip install -e . --no-deps
 
-# Ensure .env is present
+# **IMPORTANT**: Create .env file from template (this file is gitignored)
 Copy-Item .env.example .env
 ```
 
