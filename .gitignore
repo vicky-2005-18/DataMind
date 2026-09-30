@@ -1,14 +1,15 @@
 .venv/
 venv/
 __pycache__/
+*.pyc
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
 .coverage
 htmlcov/
 .env
-storage/
-logs/
+/storage/
+/logs/
 *.sqlite3
 *.sqlite3-wal
 *.sqlite3-shm
@@ -17,3 +18,5 @@ logs/
 build/
 dist/
 *.egg-info/
+.kilo/
+.agents/skills/
