@@ -20,7 +20,7 @@ class RecoveryService:
         lock_file = settings.locks_dir / "workspace.lock"
         self.lock = lock or WorkspaceLock(lock_file)
 
-    def reconcile(self, storage_root: Optional[Path] = None) -> Dict[str, int]:
+    def reconcile(self, storage_root: Optional[Path] = None) -> Dict[str, int | str]:
         """
         Reconcile workspace state after abnormal termination or on restart.
 
