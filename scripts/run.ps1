@@ -84,5 +84,5 @@ Write-Host "The application will open in your default browser." -ForegroundColor
 Write-Host "Press Ctrl+C to stop the server." -ForegroundColor Cyan
 Write-Host ""
 
-cd ..
+Set-Location ..
 python -m streamlit run app.py
