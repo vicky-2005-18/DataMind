@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
-from typing import Union
 
 
 def compute_sha256_file(file_path: Path) -> str:

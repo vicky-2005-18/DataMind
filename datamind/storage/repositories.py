@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional
@@ -150,6 +149,22 @@ class DatasetRepository:
         column_count: int,
     ) -> DatasetSummary:
         """Create a new dataset record."""
+        # Validate project exists first
+        conn = get_connection(self.db_path)
+        try:
+            project_row = conn.execute(
+                "SELECT id FROM projects WHERE id = ?;",
+                (project_id,),
+            ).fetchone()
+            if not project_row:
+                raise ServiceError(
+                    ErrorCode.PROJECT_NOT_FOUND,
+                    f"Project with ID '{project_id}' not found.",
+                    field="project_id",
+                )
+        finally:
+            conn.close()
+
         dataset_id = str(__import__("uuid").uuid4())
         created_at = datetime.now(timezone.utc).isoformat()
 

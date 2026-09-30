@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import platform
 import sqlite3
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional
@@ -96,28 +98,25 @@ class SplitRepository:
             ).fetchone()
             if row:
                 config = json.loads(row["config_json"])
-                row_policy = RowPolicy.model_validate_json(row["row_policy_json"])
 
                 # Load and parse manifest JSON
                 # Resolve relative path from storage directory
                 settings = get_settings()
                 manifest_file = settings.storage_dir / row["manifest_relative_path"]
-                if manifest_file.exists():
-                    manifest_data = json.loads(manifest_file.read_text())
-                    folds = [
-                        FoldIndices(
-                            fold_index=f["fold_index"],
-                            train_row_ids=f["train_row_ids"],
-                            val_row_ids=f["val_row_ids"],
-                        )
-                        for f in manifest_data.get("folds", [])
-                    ]
-                    train_row_ids = manifest_data.get("train_row_ids", [])
-                    test_row_ids = manifest_data.get("test_row_ids", [])
-                else:
-                    folds = []
-                    train_row_ids = []
-                    test_row_ids = []
+                if not manifest_file.exists():
+                    raise FileNotFoundError(f"Split manifest file not found: {manifest_file}")
+
+                manifest_data = json.loads(manifest_file.read_text())
+                folds = [
+                    FoldIndices(
+                        fold_index=f["fold_index"],
+                        train_row_ids=f["train_row_ids"],
+                        val_row_ids=f["val_row_ids"],
+                    )
+                    for f in manifest_data.get("folds", [])
+                ]
+                train_row_ids = manifest_data.get("train_row_ids", [])
+                test_row_ids = manifest_data.get("test_row_ids", [])
 
                 return SplitManifest(
                     split_id=row["id"],
@@ -176,7 +175,7 @@ class ExperimentRepository:
                         summary.config_json,
                         "",  # config_sha256 - computed by caller
                         summary.comparison_key,
-                        "",  # environment_json - populated by caller
+                        json.dumps({"python": sys.version, "platform": platform.platform(), "packages": {}}),  # environment_json
                         "",  # registry_version
                         "",  # metric_version
                         summary.random_seed,
