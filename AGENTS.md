@@ -2,7 +2,7 @@
 
 ## Read first
 
-START_HERE.md, PRD.md, ARCHITECTURE.md, ROADMAP.md and PROJECT_STATE.md define the build. Read docs/ML_SPEC.md, docs/DATA_CONTRACTS.md and docs/TEST_PLAN.md before implementing training or prediction. Use docs/SERVICE_CONTRACTS.md and docs/DATABASE.md for integration.
+START_HERE.md, docs/ARCHITECTURE.md, docs/internal/PRD.md, docs/internal/PROJECT_STATE.md define the build. Read docs/ML_SPEC.md, docs/DATA_CONTRACTS.md and docs/TEST_PLAN.md before implementing training or prediction. Use docs/SERVICE_CONTRACTS.md and docs/DATABASE.md for integration.
 
 The user's current explicit directions take precedence over this planning pack. Record any resulting scope changes; do not silently maintain contradictory documents.
 
@@ -40,7 +40,7 @@ The user's current explicit directions take precedence over this planning pack. 
 2. Implement a small end-to-end slice with appropriate unit/integration checks.
 3. Run relevant verification. Inspect UI when the slice changes visible behavior.
 4. Fix failures caused by the change before expanding scope.
-5. Update TASKS.md and PROJECT_STATE.md with exact evidence, remaining defects and next step.
+5. Update docs/internal/PROJECT_STATE.md with exact evidence, remaining defects and next step.
 
 Do not ask for repeated confirmation for ordinary local implementation and tests already requested. Follow the development environment's actual permissions for installations, network and external actions; this file does not grant permission to publish or bypass controls.
 

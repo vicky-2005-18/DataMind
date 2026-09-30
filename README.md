@@ -372,8 +372,8 @@ DATAMIND_MAX_ROWS=100000
 | Document | Purpose |
 |---|---|
 | [`START_HERE.md`](START_HERE.md) | Project explanation, file index, architecture background |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Layer design, data flow, module responsibilities |
-| [`PRD.md`](PRD.md) | Product requirements, acceptance criteria (FR-01–FR-20, NFR-01–NFR-10) |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Layer design, data flow, module responsibilities |
+| [`docs/internal/PRD.md`](docs/internal/PRD.md) | Product requirements, acceptance criteria (FR-01–FR-20, NFR-01–NFR-10) |
 | [`docs/ML_SPEC.md`](docs/ML_SPEC.md) | ML correctness rules, metric definitions, leakage-prevention contract |
 | [`docs/DATA_CONTRACTS.md`](docs/DATA_CONTRACTS.md) | CSV parsing bounds, missingness rules, role logic |
 | [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md) | Full test plan (T01–T44) |
