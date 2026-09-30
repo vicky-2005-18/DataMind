@@ -16,6 +16,7 @@ All notable changes to DataMind will be documented in this file.
 - CONTRIBUTING.md with development guidelines
 - `datamind` command entry point via [project.scripts]
 - [project.urls] section in pyproject.toml
+- 13 new unit tests for storage package and comparison service (coverage 70% → 72%)
 
 ### Changed
 - .gitignore: Added *.egg-info/, .kilo/, .agents/skills/, *.pyc
@@ -25,9 +26,18 @@ All notable changes to DataMind will be documented in this file.
 - README.md: Removed hardcoded test count
 - .env.example: Documented all variables, removed "Proposed / M0" wording
 - All text files normalized from CRLF to LF (batch/PowerShell scripts kept as CRLF)
+- datamind/ui/components.py: Split into package (styles, badges, cards, layout, forms, tables, charts)
 
 ### Fixed
 - Recreated datamind/storage/ package (database, repositories, experiment_repos, artifacts, locks)
+- DatasetRepository now validates project existence before creating dataset
+- SplitRepository raises FileNotFoundError if manifest file is missing (data leak protection)
+- environment_json now captured in service layer, not repository
+- Fixed relative paths in scripts to work from scripts/ directory
+- Scripts now use `python -m streamlit` for portability
+- Pruned stale git worktree from deleted .kilo directory
+- RecoveryService.reconcile return type: Dict[str, int] → Dict[str, int | str] (skipped_reason is string)
+- Fixed mypy type error in recovery.py
 - DatasetRepository now validates project existence before creating dataset
 - SplitRepository raises FileNotFoundError if manifest file is missing (data leak protection)
 - environment_json now captured in service layer, not repository
@@ -54,3 +64,6 @@ All notable changes to DataMind will be documented in this file.
 - .agents/skills/ui-ux-pro-max/ (external skill directory)
 - start_datamind_simple.bat and .ps1 (duplicates)
 - STARTUP_GUIDE.md (merged into docs/SETUP_WINDOWS.md)
+
+### Future Work
+- Split datamind/ml/experiment.py (669 lines) into smaller modules - functions are tightly coupled around experiment workflow, deferred to avoid ML correctness risks
