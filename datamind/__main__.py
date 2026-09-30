@@ -1,6 +1,5 @@
 """DataMind entry point for 'datamind' command."""
 
-import subprocess
 import sys
 
 
