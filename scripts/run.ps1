@@ -85,4 +85,4 @@ Write-Host "Press Ctrl+C to stop the server." -ForegroundColor Cyan
 Write-Host ""
 
 cd ..
-streamlit run app.py
+python -m streamlit run app.py

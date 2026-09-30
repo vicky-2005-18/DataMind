@@ -52,6 +52,6 @@ echo Press Ctrl+C to stop the server.
 echo.
 
 cd ..
-streamlit run app.py
+python -m streamlit run app.py
 
 pause

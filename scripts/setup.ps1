@@ -86,7 +86,7 @@ MKL_NUM_THREADS=1
     Write-Host "You can now start DataMind by running:" -ForegroundColor Cyan
     Write-Host "  .\scripts\run.ps1" -ForegroundColor White
     Write-Host "  or" -ForegroundColor White
-    Write-Host "  streamlit run app.py" -ForegroundColor White
+    Write-Host "  python -m streamlit run app.py" -ForegroundColor White
     Write-Host ""
 } else {
     Write-Host ""
