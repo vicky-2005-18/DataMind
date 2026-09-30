@@ -2,6 +2,8 @@
 
 from typing import Literal
 
+import streamlit as st
+
 PillVariant = Literal["primary", "cyan", "success", "amber", "rose", "muted"]
 BentoSpan = Literal["1x1", "2x1", "2x2"]
 
@@ -514,8 +516,6 @@ button, [role="button"], a {
 }
 </style>
 """
-
-import streamlit as st
 
 
 def apply_global_styles() -> None:
