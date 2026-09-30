@@ -113,7 +113,11 @@ def error_state(
         recovery_hint: Optional hint on how to recover from the error
         error_code: Optional error code for debugging
     """
-    code_text = f" <code style='background: {Theme.color.BACKGROUND_ELEVATED}; padding: 2px 6px; border-radius: 4px;'>[{error_code}]</code>" if error_code else ""
+    code_text = (
+        f" <code style='background: {Theme.color.BACKGROUND_ELEVATED}; padding: 2px 6px; border-radius: 4px;'>[{error_code}]</code>"
+        if error_code
+        else ""
+    )
     hint_text = f"\n\n**Recovery:** {recovery_hint}" if recovery_hint else ""
 
     st.error(f"{code_text} {message}{hint_text}")

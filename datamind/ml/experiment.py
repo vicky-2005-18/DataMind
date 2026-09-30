@@ -540,11 +540,15 @@ def run_experiment(
     baseline_trials = [t for t in trials if t.is_baseline]
     baseline_failed = len(baseline_trials) == 0 or baseline_trials[0].status != "completed"
     candidate_trials = [t for t in trials if not t.is_baseline]
-    all_candidates_failed = len(candidate_trials) > 0 and all(t.status != "completed" for t in candidate_trials)
+    all_candidates_failed = len(candidate_trials) > 0 and all(
+        t.status != "completed" for t in candidate_trials
+    )
 
     if baseline_failed:
         overall_status = "failed"
-        selection_reason = "Baseline estimator failed to fit; supervised experiment marked as failed."
+        selection_reason = (
+            "Baseline estimator failed to fit; supervised experiment marked as failed."
+        )
         champion = None
     elif all_candidates_failed:
         overall_status = "failed"
@@ -663,4 +667,3 @@ def score_holdout(
         )
 
     return metrics, confusion_mat, class_labels
-

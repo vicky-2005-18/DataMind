@@ -72,7 +72,9 @@ def _make_dummy_dataset_summary(
             role = ColumnRole.NUMERIC
         else:
             role = ColumnRole.CATEGORICAL
-        columns.append(ColumnSchema(name=col, inferred_type=str(df[col].dtype), suggested_role=role))
+        columns.append(
+            ColumnSchema(name=col, inferred_type=str(df[col].dtype), suggested_role=role)
+        )
         col_profiles.append(
             ColumnProfile(
                 name=col,
@@ -246,10 +248,12 @@ def test_t10_exact_duplicates_collapsed_with_policy():
 
 def test_t10_conflicting_targets_rejected():
     """T10b: Same features but different target values must raise CONFLICTING_DUPLICATES."""
-    df = pd.DataFrame({
-        "feat": [1.0, 1.0, 2.0, 2.0, 3.0] * 7,
-        "target": ["a", "b", "a", "a", "b"] * 7,
-    })
+    df = pd.DataFrame(
+        {
+            "feat": [1.0, 1.0, 2.0, 2.0, 3.0] * 7,
+            "target": ["a", "b", "a", "a", "b"] * 7,
+        }
+    )
     df.index = range(len(df))
     ds = _make_dummy_dataset_summary(df, TaskType.CLASSIFICATION, "target")
     with pytest.raises(ServiceError) as exc_info:
@@ -335,10 +339,12 @@ def test_t13_too_few_rows_per_class_rejected():
     """T13: Classes with fewer than 10 rows before split must be rejected."""
     n_majority = 100
     n_rare = 5  # < 10
-    df = pd.DataFrame({
-        "feat": np.random.randn(n_majority + n_rare),
-        "target": ["common"] * n_majority + ["rare"] * n_rare,
-    })
+    df = pd.DataFrame(
+        {
+            "feat": np.random.randn(n_majority + n_rare),
+            "target": ["common"] * n_majority + ["rare"] * n_rare,
+        }
+    )
     df.index = range(len(df))
     ds = _make_dummy_dataset_summary(df, TaskType.CLASSIFICATION, "target")
     with pytest.raises(ServiceError) as exc_info:
@@ -372,6 +378,7 @@ def test_t14_spy_transformer_fit_row_ids():
 
         spy = FitSpyTransformer()
         from sklearn.pipeline import Pipeline
+
         p = Pipeline([("spy", spy)])
         p.fit(X_train, y_train)
 
@@ -385,6 +392,7 @@ def test_t14_spy_transformer_fit_row_ids():
     y_dev = df.loc[dev_ids, view.target]
     spy2 = FitSpyTransformer()
     from sklearn.pipeline import Pipeline
+
     p2 = Pipeline([("spy", spy2)])
     p2.fit(X_dev, y_dev)
     assert sorted(spy2.fitted_indices) == sorted(dev_ids)
@@ -432,11 +440,13 @@ def test_t15_fitted_pipeline_unchanged_by_holdout():
 
 def test_t16_all_missing_numeric_column_stable():
     """T16: An all-missing numeric column must not cause a width change or error."""
-    df = pd.DataFrame({
-        "good": np.random.randn(80),
-        "all_missing": [np.nan] * 80,
-        "target": (np.random.randn(80) > 0).astype(str),
-    })
+    df = pd.DataFrame(
+        {
+            "good": np.random.randn(80),
+            "all_missing": [np.nan] * 80,
+            "target": (np.random.randn(80) > 0).astype(str),
+        }
+    )
     df.index = range(80)
     # Build preprocessor and fit — must not error
     prep = build_preprocessor(["good", "all_missing"], [], PreprocessingConfig())
@@ -483,6 +493,7 @@ def test_t17_regression_oracle():
     assert abs(by_name["r2"] - (-1.0)) < 1e-10
     # RMSE direction must be MINIMIZE
     from datamind.contracts import MetricDirection
+
     rmse_m = next(m for m in metrics if m.name == "rmse")
     assert rmse_m.direction == MetricDirection.MINIMIZE
 

@@ -50,10 +50,14 @@ class ExportService:
         config = json.loads(experiment.config_json)
         target = config.get("target")
         if not target:
-            raise ServiceError(ErrorCode.INVALID_MODEL_CONFIG, "Saved experiment target is missing.")
+            raise ServiceError(
+                ErrorCode.INVALID_MODEL_CONFIG, "Saved experiment target is missing."
+            )
         manifest = self.experiment_service.split_repo.get_by_id(experiment.split_id)
         if manifest is None:
-            raise ServiceError(ErrorCode.INVALID_MODEL_CONFIG, "Saved split manifest is unavailable.")
+            raise ServiceError(
+                ErrorCode.INVALID_MODEL_CONFIG, "Saved split manifest is unavailable."
+            )
         evaluation = self.experiment_service.get_evaluation(experiment_id)
         settings = get_settings()
         experiment_dir = settings.experiments_dir / experiment_id
@@ -62,7 +66,9 @@ class ExportService:
         if not model_path.exists() and experiment.selected_trial_id:
             model_path = experiment_dir / f"{experiment.selected_trial_id}_champion.joblib"
         if not schema_path.exists() or not model_path.exists():
-            raise ServiceError(ErrorCode.MODEL_UNAVAILABLE, "Saved model or input schema is unavailable.")
+            raise ServiceError(
+                ErrorCode.MODEL_UNAVAILABLE, "Saved model or input schema is unavailable."
+            )
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
         environment = self._load_environment(experiment_id)
         return {
@@ -88,7 +94,7 @@ class ExportService:
             ).fetchone()
         finally:
             conn.close()
-        if row:
+        if row and row["environment_json"]:
             return json.loads(row["environment_json"])
         return {"python": sys.version, "platform": platform.platform(), "packages": {}}
 
@@ -127,14 +133,20 @@ class ExportService:
         dataset = evidence["dataset"]
         manifest = evidence["manifest"]
         selected = next(
-            (trial for trial in experiment.trials if trial.trial_id == experiment.selected_trial_id),
+            (
+                trial
+                for trial in experiment.trials
+                if trial.trial_id == experiment.selected_trial_id
+            ),
             None,
         )
         importance = self.compute_importance(experiment_id)
         return {
             **evidence,
             "selected": selected,
-            "importance": sorted(importance, key=lambda row: abs(row["mean_importance"]), reverse=True),
+            "importance": sorted(
+                importance, key=lambda row: abs(row["mean_importance"]), reverse=True
+            ),
             "source": json.loads(dataset.source_json),
             "parser": json.loads(dataset.parser_config_json),
             "split": {
@@ -182,7 +194,9 @@ class ExportService:
         exposure = "N/A"
         if evaluation:
             exposure = "Yes" if evaluation.holdout_previously_exposed else "No"
-            holdout = escape(json.dumps([metric.model_dump(mode="json") for metric in evaluation.metrics]))
+            holdout = escape(
+                json.dumps([metric.model_dump(mode="json") for metric in evaluation.metrics])
+            )
         content = f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>DataMind report — {escape(experiment.name)}</title>
@@ -191,17 +205,17 @@ class ExportService:
 <p>Generated UTC: {escape(datetime.datetime.now(datetime.timezone.utc).isoformat())}</p>
 <h2>Source and scope</h2><ul>
 <li>Dataset: {escape(dataset.display_name)} ({escape(dataset.id)})</li><li>Raw SHA-256: {escape(dataset.raw_sha256)}</li>
-<li>Task: {escape(experiment.task.value)}</li><li>Target: {escape(payload['target'])}</li>
-<li>Development rows: {payload['split']['development_rows']}; holdout rows: {payload['split']['holdout_rows']}; CV folds: {payload['split']['cv_folds']}; seed: {payload['split']['seed']}</li>
-<li>Selected model: {escape(selected.algorithm_id if selected else 'N/A')}</li><li>Holdout previously exposed: {exposure}</li></ul>
-<h2>Actual resolved configuration</h2><pre>{escape(json.dumps(payload['config'], indent=2, sort_keys=True))}</pre>
-<h2>Cleaning and limits</h2><pre>{escape(json.dumps({'cleaning_log': payload['config'].get('cleaning_log', []), 'parser': payload['parser'], 'limits': payload['limits']}, indent=2, sort_keys=True))}</pre>
-<h2>Cross-validation trials and failures</h2><table><thead><tr><th>Algorithm</th><th>Status</th><th>Primary CV mean</th><th>Fit seconds</th><th>Failure</th></tr></thead><tbody>{''.join(rows)}</tbody></table>
+<li>Task: {escape(experiment.task.value)}</li><li>Target: {escape(payload["target"])}</li>
+<li>Development rows: {payload["split"]["development_rows"]}; holdout rows: {payload["split"]["holdout_rows"]}; CV folds: {payload["split"]["cv_folds"]}; seed: {payload["split"]["seed"]}</li>
+<li>Selected model: {escape(selected.algorithm_id if selected else "N/A")}</li><li>Holdout previously exposed: {exposure}</li></ul>
+<h2>Actual resolved configuration</h2><pre>{escape(json.dumps(payload["config"], indent=2, sort_keys=True))}</pre>
+<h2>Cleaning and limits</h2><pre>{escape(json.dumps({"cleaning_log": payload["config"].get("cleaning_log", []), "parser": payload["parser"], "limits": payload["limits"]}, indent=2, sort_keys=True))}</pre>
+<h2>Cross-validation trials and failures</h2><table><thead><tr><th>Algorithm</th><th>Status</th><th>Primary CV mean</th><th>Fit seconds</th><th>Failure</th></tr></thead><tbody>{"".join(rows)}</tbody></table>
 <h2>Permutation importance — development-set diagnostic</h2><p class="note">Not independent evaluation and not causal evidence. Correlated features can obscure importance; negative values are legitimate. Seed 42, five repeats, at most 50 original features and 500 development rows.</p>
 <table><thead><tr><th>Original feature</th><th>Mean change</th><th>Variation</th><th>Rows</th></tr></thead><tbody>{importance_rows}</tbody></table>
 <h2>Holdout evaluation</h2><pre>{holdout}</pre>
-<h2>Environment</h2><pre>{escape(json.dumps(payload['environment'], indent=2, sort_keys=True))}</pre>
-<h2>Artifact hashes</h2><pre>{escape(json.dumps({'pipeline.joblib': compute_sha256_file(payload['model_path']), 'input_schema.json': compute_sha256_file(payload['schema_path'])}, indent=2))}</pre>
+<h2>Environment</h2><pre>{escape(json.dumps(payload["environment"], indent=2, sort_keys=True))}</pre>
+<h2>Artifact hashes</h2><pre>{escape(json.dumps({"pipeline.joblib": compute_sha256_file(payload["model_path"]), "input_schema.json": compute_sha256_file(payload["schema_path"])}, indent=2))}</pre>
 <p>Raw training data is excluded from exports by default.</p></body></html>"""
         path = get_settings().exports_dir / f"{experiment_id}_report.html"
         write_atomic_bytes(path, content.encode("utf-8"))
@@ -263,7 +277,9 @@ class ExportService:
                 "## Holdout evaluation",
                 "```json",
                 json.dumps(
-                    payload["evaluation"].model_dump(mode="json") if payload["evaluation"] else None,
+                    payload["evaluation"].model_dump(mode="json")
+                    if payload["evaluation"]
+                    else None,
                     indent=2,
                     sort_keys=True,
                 ),
@@ -325,7 +341,10 @@ Security: joblib/pickle deserialization can execute code. Load this file only wh
                 json.dumps(evidence["config"], indent=2, sort_keys=True).encode(),
                 "experiments.config_json",
             ),
-            "metrics.json": (json.dumps(metrics, indent=2, sort_keys=True).encode(), "stored trials/evaluation"),
+            "metrics.json": (
+                json.dumps(metrics, indent=2, sort_keys=True).encode(),
+                "stored trials/evaluation",
+            ),
             "environment.json": (
                 json.dumps(evidence["environment"], indent=2, sort_keys=True).encode(),
                 "experiments.environment_json",
@@ -347,7 +366,10 @@ Security: joblib/pickle deserialization can execute code. Load this file only wh
                 json.dumps(evidence["config"], indent=2, sort_keys=True).encode(),
                 "experiments.config_json",
             ),
-            "metrics.json": (json.dumps(metrics, indent=2, sort_keys=True).encode(), "stored trials/evaluation"),
+            "metrics.json": (
+                json.dumps(metrics, indent=2, sort_keys=True).encode(),
+                "stored trials/evaluation",
+            ),
             "environment.json": (
                 json.dumps(evidence["environment"], indent=2, sort_keys=True).encode(),
                 "experiments.environment_json",

@@ -73,3 +73,100 @@ Do not report these commands as passed until they have actually run. Use direct 
 ## Delivery runbook
 
 Record actual environment and tested commands in the implementation README. Do not commit `.venv`, `.env`, uploaded datasets, SQLite files or trained models. Commit specs, code, small synthetic fixtures, migration files and lockfiles. Docker is optional after the local demo works; it is not a prerequisite.
+
+## Quick Start (Automated Setup)
+
+### Option 1: Run Setup Script (Recommended for First Time)
+
+1. Open PowerShell in the DataMind project directory
+2. Run the setup script:
+   ```powershell
+   .\scripts\setup.ps1
+   ```
+3. After setup completes, run:
+   ```powershell
+   .\scripts\run.ps1
+   ```
+
+### Option 2: Direct Startup (If Dependencies Already Installed)
+
+```powershell
+.\scripts\run.ps1
+```
+
+### Option 3: Manual Startup
+
+```powershell
+streamlit run app.py
+```
+
+## Available Scripts
+
+### `scripts/setup.ps1`
+- **Purpose**: Install all required dependencies and configure environment
+- **When to use**: First time setup or if you encounter dependency issues
+- **What it does**:
+  - Checks Python installation
+  - Upgrades pip
+  - Installs all project dependencies
+  - **Automatically creates .env file from .env.example** (fixes missing file issue on fresh clones)
+  - **Cleans up any existing storage directory** (removes stale data from ZIP downloads)
+
+### `scripts/run.ps1`
+- **Purpose**: Start DataMind with full checks
+- **When to use**: Regular startup
+- **What it does**:
+  - Checks Python installation
+  - Verifies correct directory
+  - Installs/updates dependencies if needed
+  - **Cleans up any existing storage directory** (removes stale data from ZIP downloads)
+  - **Automatically creates .env file if missing**
+  - Starts the application
+
+### `scripts/run.bat`
+- **Purpose**: Start DataMind with full checks (Batch version)
+- **When to use**: Regular startup on Windows without PowerShell
+- **What it does**: Same as `scripts/run.ps1` but for Command Prompt
+
+## Troubleshooting
+
+### "streamlit is not recognized"
+**Solution**: Run the setup script first:
+```powershell
+.\scripts\setup.ps1
+```
+
+### "python is not recognized"
+**Solution**: Install Python 3.11+ from https://www.python.org/
+- **Important**: Check "Add Python to PATH" during installation
+
+### Script execution policy error
+**Solution**: Allow script execution in PowerShell:
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+### Dependencies not installing
+**Solution**: Try upgrading pip first:
+```powershell
+python -m pip install --upgrade pip
+pip install -e .
+```
+
+## System Requirements
+
+- **Python**: 3.11 or higher
+- **Operating System**: Windows, macOS, or Linux
+- **Memory**: 4GB RAM minimum, 8GB recommended
+- **Disk Space**: 500MB for dependencies
+
+## After Startup
+
+Once DataMind starts:
+1. The application will open in your default browser
+2. Navigate to `http://localhost:8501` if it doesn't open automatically
+3. Create a project or load a demo dataset to get started
+
+## Stopping the Application
+
+Press `Ctrl+C` in the PowerShell window to stop the DataMind server.

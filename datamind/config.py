@@ -27,12 +27,8 @@ class Settings(BaseModel):
         default_factory=lambda: int(os.getenv("DATAMIND_MAX_UPLOAD_MIB", "10"))
     )
     max_rows: int = Field(default_factory=lambda: int(os.getenv("DATAMIND_MAX_ROWS", "20000")))
-    max_columns: int = Field(
-        default_factory=lambda: int(os.getenv("DATAMIND_MAX_COLUMNS", "100"))
-    )
-    default_seed: int = Field(
-        default_factory=lambda: int(os.getenv("DATAMIND_DEFAULT_SEED", "42"))
-    )
+    max_columns: int = Field(default_factory=lambda: int(os.getenv("DATAMIND_MAX_COLUMNS", "100")))
+    default_seed: int = Field(default_factory=lambda: int(os.getenv("DATAMIND_DEFAULT_SEED", "42")))
 
     @property
     def max_upload_bytes(self) -> int:

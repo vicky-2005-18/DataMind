@@ -104,7 +104,7 @@ def render_home_page() -> None:
                 help="Optional context for this project.",
                 height=80,
             )
-            submitted = st.form_submit_button("Create & Select", type="primary", width='stretch')
+            submitted = st.form_submit_button("Create & Select", type="primary", width="stretch")
 
             if submitted:
                 if not name.strip():
@@ -136,14 +136,14 @@ def render_home_page() -> None:
                 with st.container(border=True):
                     header_cols = st.columns([3, 1])
                     with header_cols[0]:
-                        badge_html = f' {pill_html("Active", "success")}' if is_active else ""
+                        badge_html = f" {pill_html('Active', 'success')}" if is_active else ""
                         st.markdown(f"**{escape(p.name)}**{badge_html}", unsafe_allow_html=True)
                         if p.description:
                             st.caption(p.description)
                         st.caption(f"Created {p.created_at[:10]}")
                     with header_cols[1]:
                         if not is_active:
-                            if st.button("Activate", key=f"sel_proj_{p.id}", width='stretch'):
+                            if st.button("Activate", key=f"sel_proj_{p.id}", width="stretch"):
                                 NavigationContext.set_active_project(p)
                                 st.rerun()
 
@@ -171,12 +171,14 @@ def render_home_page() -> None:
             demo_cols = st.columns(3)
             for column, (kind, label) in zip(demo_cols, QUICK_START_DEMOS):
                 with column:
-                    if st.button(label, key=f"demo_{kind.value}", width='stretch'):
+                    if st.button(label, key=f"demo_{kind.value}", width="stretch"):
                         _load_demo(kind, active_project.id)
         return
 
     if not experiments:
-        st.info("Your data is ready. Open **Explore** to choose a target and prepare a modeling split.")
+        st.info(
+            "Your data is ready. Open **Explore** to choose a target and prepare a modeling split."
+        )
         return
 
     _render_activity_horizon(experiments[:6])
@@ -207,12 +209,12 @@ def _render_lab_bento(active_project) -> None:
             (escape(str(len(completed))), "Completed runs"),
         ]
     )
-    hero_footer = f'ID: {escape(active_project.id[:8])} • created {escape(active_project.created_at[:10])}'
+    hero_footer = (
+        f"ID: {escape(active_project.id[:8])} • created {escape(active_project.created_at[:10])}"
+    )
 
     active_dataset_id = st.session_state.get("active_dataset_id")
-    active_dataset = (
-        dataset_service.get_dataset(active_dataset_id) if active_dataset_id else None
-    )
+    active_dataset = dataset_service.get_dataset(active_dataset_id) if active_dataset_id else None
     if active_dataset is not None:
         profile = active_dataset.get_profile()
         warning_count = len(profile.quality_warnings)

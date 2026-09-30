@@ -79,9 +79,7 @@ def prepare_modeling_view(
                 details={"missing_count": missing_target_count},
             )
         view_df = view_df[~missing_target_mask].copy()
-        cleaning_log.append(
-            f"Dropped {missing_target_count} rows with missing target '{target}'."
-        )
+        cleaning_log.append(f"Dropped {missing_target_count} rows with missing target '{target}'.")
 
     # 3. Conflicting duplicates and exact duplicates (T10)
     # Check conflicting targets on identical feature vectors
@@ -106,7 +104,9 @@ def prepare_modeling_view(
             view_df = view_df.drop_duplicates(subset=subset_all, keep="first").copy()
             cleaning_log.append(f"Collapsed {exact_duplicates_count} exact duplicate rows.")
         else:
-            cleaning_log.append(f"Retained {exact_duplicates_count} exact duplicate rows per policy.")
+            cleaning_log.append(
+                f"Retained {exact_duplicates_count} exact duplicate rows per policy."
+            )
 
     # 4. Minimum eligible rows check (T13)
     if len(view_df) < 30:

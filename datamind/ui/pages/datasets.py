@@ -53,9 +53,7 @@ def render_datasets_page() -> None:
             for dataset in project_datasets
         }
         selected_idx = (
-            list(ds_dict.keys()).index(current_active_id)
-            if current_active_id in ds_dict
-            else 0
+            list(ds_dict.keys()).index(current_active_id) if current_active_id in ds_dict else 0
         )
         chosen_id = st.selectbox(
             "Active dataset",
@@ -112,7 +110,9 @@ def render_datasets_page() -> None:
                             display_name=ds_name,
                         )
                     NavigationContext.set_active_dataset(new_ds.id)
-                    st.success(f"Dataset **{new_ds.display_name}** ingested successfully! ({new_ds.row_count:,} rows, {new_ds.column_count} columns)")
+                    st.success(
+                        f"Dataset **{new_ds.display_name}** ingested successfully! ({new_ds.row_count:,} rows, {new_ds.column_count} columns)"
+                    )
                     st.rerun()
                 except ServiceError as err:
                     render_service_error(err)
@@ -122,11 +122,11 @@ def render_datasets_page() -> None:
     # 2. TAB: Load Demo Datasets
     with tab_demos:
         st.subheader("Offline Demo Datasets")
-        st.caption("Load curated educational datasets generated completely offline without internet dependencies.")
+        st.caption(
+            "Load curated educational datasets generated completely offline without internet dependencies."
+        )
 
-        demo_options = {
-            kind: description for kind, description in DEMO_DESCRIPTIONS.items()
-        }
+        demo_options = {kind: description for kind, description in DEMO_DESCRIPTIONS.items()}
 
         selected_kind = st.selectbox(
             "Choose a demo dataset",
@@ -174,7 +174,7 @@ def render_datasets_page() -> None:
                 }
                 for dataset in project_datasets
             ]
-            st.dataframe(dataset_rows, width='stretch', hide_index=True)
+            st.dataframe(dataset_rows, width="stretch", hide_index=True)
             st.caption("Use the Active dataset selector above to inspect or work with a dataset.")
 
     # RENDER PROFILE VIEW IF A DATASET IS ACTIVE
@@ -290,20 +290,22 @@ def render_dataset_inspection(dataset: DatasetSummary, service: DatasetService) 
 
     col_data = []
     for col in profile.columns:
-        col_data.append({
-            "Column Name": col.name,
-            "Inferred Type": col.dtype,
-            "Suggested Role": col.suggested_role.value,
-            "Missing Count": col.null_count,
-            "Null %": col.null_percentage,
-            "Unique Values": col.unique_count,
-            "Sample Values": ", ".join(col.sample_values[:4]),
-            "Column Warnings": "; ".join(col.warnings) if col.warnings else "None",
-        })
+        col_data.append(
+            {
+                "Column Name": col.name,
+                "Inferred Type": col.dtype,
+                "Suggested Role": col.suggested_role.value,
+                "Missing Count": col.null_count,
+                "Null %": col.null_percentage,
+                "Unique Values": col.unique_count,
+                "Sample Values": ", ".join(col.sample_values[:4]),
+                "Column Warnings": "; ".join(col.warnings) if col.warnings else "None",
+            }
+        )
 
     st.dataframe(
         col_data,
-        width='stretch',
+        width="stretch",
         hide_index=True,
         column_config={
             "Null %": st.column_config.ProgressColumn(
@@ -321,6 +323,6 @@ def render_dataset_inspection(dataset: DatasetSummary, service: DatasetService) 
     st.caption("First 10 rows loaded from immutable storage with verified SHA-256 integrity.")
     try:
         df = service.load_dataframe(dataset.id)
-        st.dataframe(df.head(10), width='stretch')
+        st.dataframe(df.head(10), width="stretch")
     except Exception as exc:
         st.error(f"Could not preview stored table: {exc}")

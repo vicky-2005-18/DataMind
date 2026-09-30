@@ -213,9 +213,7 @@ def build_modeling_view(
     if task == TaskType.CLASSIFICATION:
         y_eligible = df[target]
         class_counts: Dict[str, int] = y_eligible.value_counts().to_dict()
-        insufficient = {
-            cls: cnt for cls, cnt in class_counts.items() if cnt < MIN_ROWS_PER_CLASS
-        }
+        insufficient = {cls: cnt for cls, cnt in class_counts.items() if cnt < MIN_ROWS_PER_CLASS}
         if insufficient:
             raise ServiceError(
                 ErrorCode.INSUFFICIENT_CLASS_SUPPORT,

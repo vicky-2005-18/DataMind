@@ -56,7 +56,11 @@ def compute_silhouette_diagnostic(
         sample_x = transformed
         sample_labels = labels
     if not 2 <= len(np.unique(sample_labels)) <= len(sample_x) - 1:
-        return None, "The seeded silhouette sample did not contain a valid number of clusters.", sample_size
+        return (
+            None,
+            "The seeded silhouette sample did not contain a valid number of clusters.",
+            sample_size,
+        )
     return float(silhouette_score(sample_x, sample_labels)), None, sample_size
 
 
@@ -119,7 +123,9 @@ class ClusteringService:
             )
 
         selected = frame[feature_names].copy()
-        invalid = [name for name in feature_names if not np.issubdtype(selected[name].dtype, np.number)]
+        invalid = [
+            name for name in feature_names if not np.issubdtype(selected[name].dtype, np.number)
+        ]
         if invalid:
             raise ServiceError(
                 ErrorCode.UNSUPPORTED_FEATURE,
@@ -133,8 +139,14 @@ class ClusteringService:
             )
 
         all_missing = [name for name in feature_names if selected[name].isna().all()]
-        constant = [name for name in feature_names if name not in all_missing and selected[name].nunique(dropna=True) <= 1]
-        usable = [name for name in feature_names if name not in all_missing and name not in constant]
+        constant = [
+            name
+            for name in feature_names
+            if name not in all_missing and selected[name].nunique(dropna=True) <= 1
+        ]
+        usable = [
+            name for name in feature_names if name not in all_missing and name not in constant
+        ]
         if len(usable) < 2:
             raise ServiceError(
                 ErrorCode.INVALID_MODEL_CONFIG,
@@ -150,14 +162,23 @@ class ClusteringService:
             "excluded_all_missing": all_missing,
             "excluded_constant": constant,
             "preprocessing": {"imputer": "median", "scaler": "standard"},
-            "model": {"algorithm_id": "kmeans", "parameters": {"k": k, "n_init": 10, "max_iter": 300}},
+            "model": {
+                "algorithm_id": "kmeans",
+                "parameters": {"k": k, "n_init": 10, "max_iter": 300},
+            },
             "random_seed": seed,
             "primary_metric": "silhouette",
         }
         config_json = json.dumps(config, sort_keys=True)
-        token = submission_token or hashlib.sha256(
-            json.dumps({"project_id": project_id, "name": experiment_name, "config": config}, sort_keys=True).encode()
-        ).hexdigest()
+        token = (
+            submission_token
+            or hashlib.sha256(
+                json.dumps(
+                    {"project_id": project_id, "name": experiment_name, "config": config},
+                    sort_keys=True,
+                ).encode()
+            ).hexdigest()
+        )
         cached = self.experiment_repo.get_by_submission_token(token)
         if cached is not None:
             return self.load_result(cached.id)
@@ -198,19 +219,25 @@ class ClusteringService:
                     random_state=seed,
                 )
                 sweep_model.fit(transformed)
-                elbow_points.append({"k": float(candidate_k), "inertia": float(sweep_model.inertia_)})
+                elbow_points.append(
+                    {"k": float(candidate_k), "inertia": float(sweep_model.inertia_)}
+                )
 
             model = KMeans(n_clusters=k, n_init=10, max_iter=300, random_state=seed)
             labels = model.fit_predict(transformed)
             observed_clusters = np.unique(labels)
             warnings: list[str] = []
             if len(observed_clusters) < k:
-                warnings.append(f"K-Means produced {len(observed_clusters)} distinct clusters for requested k={k}.")
+                warnings.append(
+                    f"K-Means produced {len(observed_clusters)} distinct clusters for requested k={k}."
+                )
 
-            silhouette_value, silhouette_reason, silhouette_sample_size = compute_silhouette_diagnostic(
-                transformed,
-                labels,
-                seed,
+            silhouette_value, silhouette_reason, silhouette_sample_size = (
+                compute_silhouette_diagnostic(
+                    transformed,
+                    labels,
+                    seed,
+                )
             )
 
             pca = PCA(n_components=2)
@@ -220,7 +247,13 @@ class ClusteringService:
 
             experiment_dir = get_settings().experiments_dir / experiment_id
             experiment_dir.mkdir(parents=True, exist_ok=False)
-            pipeline = Pipeline([("imputer", preprocess["imputer"]), ("scaler", preprocess["scaler"]), ("model", model)])
+            pipeline = Pipeline(
+                [
+                    ("imputer", preprocess["imputer"]),
+                    ("scaler", preprocess["scaler"]),
+                    ("model", model),
+                ]
+            )
             model_path = experiment_dir / "kmeans.joblib"
             joblib.dump(pipeline, model_path)
 
@@ -242,7 +275,9 @@ class ClusteringService:
                 "warnings": warnings,
             }
             diagnostic_path = experiment_dir / "clustering_diagnostics.json"
-            write_atomic_bytes(diagnostic_path, json.dumps(diagnostic, indent=2, sort_keys=True).encode())
+            write_atomic_bytes(
+                diagnostic_path, json.dumps(diagnostic, indent=2, sort_keys=True).encode()
+            )
             config_path = experiment_dir / "config.json"
             write_atomic_bytes(config_path, config_json.encode())
 
@@ -263,7 +298,9 @@ class ClusteringService:
                     value=silhouette_value,
                     reason=silhouette_reason,
                     direction=MetricDirection.MAXIMIZE,
-                    details_json=json.dumps({"sample_size": silhouette_sample_size, "space": "scaled_modeling_features"}),
+                    details_json=json.dumps(
+                        {"sample_size": silhouette_sample_size, "space": "scaled_modeling_features"}
+                    ),
                 ),
             ]
             trial = TrialResult(
@@ -289,7 +326,10 @@ class ClusteringService:
                 submission_token=token,
                 config_json=config_json,
                 comparison_key=hashlib.sha256(
-                    json.dumps({"dataset_id": dataset_id, "features": usable, "scaling": "standard"}, sort_keys=True).encode()
+                    json.dumps(
+                        {"dataset_id": dataset_id, "features": usable, "scaling": "standard"},
+                        sort_keys=True,
+                    ).encode()
                 ).hexdigest(),
                 random_seed=seed,
                 primary_metric="silhouette",
@@ -323,7 +363,9 @@ class ClusteringService:
                 warnings=warnings,
             )
 
-    def _register_artifacts(self, experiment_id: str, trial_id: str, artifact_paths: dict[str, str]) -> None:
+    def _register_artifacts(
+        self, experiment_id: str, trial_id: str, artifact_paths: dict[str, str]
+    ) -> None:
         settings = get_settings()
         conn = get_connection(settings.db_path)
         try:
@@ -354,9 +396,13 @@ class ClusteringService:
         summary = self.experiment_repo.get_by_id(experiment_id)
         if summary is None or summary.task != TaskType.CLUSTERING:
             raise ServiceError(ErrorCode.INVALID_MODEL_CONFIG, "Clustering experiment not found.")
-        diagnostic_path = get_settings().experiments_dir / experiment_id / "clustering_diagnostics.json"
+        diagnostic_path = (
+            get_settings().experiments_dir / experiment_id / "clustering_diagnostics.json"
+        )
         if not diagnostic_path.exists():
-            raise ServiceError(ErrorCode.MODEL_UNAVAILABLE, "Clustering diagnostic artifact is missing.")
+            raise ServiceError(
+                ErrorCode.MODEL_UNAVAILABLE, "Clustering diagnostic artifact is missing."
+            )
         data = json.loads(diagnostic_path.read_text(encoding="utf-8"))
         experiment_dir = diagnostic_path.parent
         return ClusteringResult(
@@ -372,9 +418,13 @@ class ClusteringService:
             pca_explained_variance=data["pca_explained_variance"],
             elbow_points=data["elbow_points"],
             artifact_paths={
-                "model": safe_relative_path(get_settings().storage_dir, experiment_dir / "kmeans.joblib"),
+                "model": safe_relative_path(
+                    get_settings().storage_dir, experiment_dir / "kmeans.joblib"
+                ),
                 "diagnostics": safe_relative_path(get_settings().storage_dir, diagnostic_path),
-                "config": safe_relative_path(get_settings().storage_dir, experiment_dir / "config.json"),
+                "config": safe_relative_path(
+                    get_settings().storage_dir, experiment_dir / "config.json"
+                ),
             },
             warnings=data["warnings"],
         )

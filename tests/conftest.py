@@ -31,3 +31,10 @@ def migrated_db(tmp_storage_dir: Path) -> Path:
     db_path = tmp_storage_dir / "datamind.sqlite3"
     run_migrations(db_path)
     return db_path
+
+
+@pytest.fixture
+def tmp_path() -> Generator[Path, None, None]:
+    """Provide a temporary directory for generic test file operations."""
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        yield Path(tmp_dir)

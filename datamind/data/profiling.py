@@ -60,7 +60,9 @@ def profile_dataframe(df: pd.DataFrame) -> Tuple[DatasetProfile, TableSchema]:
             )
             suggested_role = ColumnRole.UNSUPPORTED
         elif unique_count == row_count and row_count >= 20:
-            col_warnings.append("Values are 100% unique across all rows (likely an ID or key column).")
+            col_warnings.append(
+                "Values are 100% unique across all rows (likely an ID or key column)."
+            )
             suggested_role = ColumnRole.ID_LIKE
         elif is_numeric:
             suggested_role = ColumnRole.NUMERIC

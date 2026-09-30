@@ -83,7 +83,9 @@ def render_experiments_page() -> None:
         task = st.selectbox(
             "Task Type",
             options=[TaskType.CLASSIFICATION, TaskType.REGRESSION],
-            format_func=lambda t: "Classification" if t == TaskType.CLASSIFICATION else "Regression",
+            format_func=lambda t: (
+                "Classification" if t == TaskType.CLASSIFICATION else "Regression"
+            ),
             key="exp_task",
         )
 
@@ -115,18 +117,26 @@ def render_experiments_page() -> None:
     # semantic label — a literal "numeric" comparison misroutes every feature
     # into the categorical pipeline and crashes the categorical imputer.
     numeric_features = [
-        c.name for c in schema.columns if c.name in features and pd.api.types.is_numeric_dtype(c.inferred_type)
+        c.name
+        for c in schema.columns
+        if c.name in features and pd.api.types.is_numeric_dtype(c.inferred_type)
     ]
     categorical_features = [c for c in features if c not in numeric_features]
 
     # ── 2. Preprocessing Configuration ───────────────────────────────
     st.markdown("### 2. Preprocessing Configuration")
-    st.caption("Transformers are fitted fold-locally inside each CV fold to guarantee zero data leakage.")
+    st.caption(
+        "Transformers are fitted fold-locally inside each CV fold to guarantee zero data leakage."
+    )
     prep_col1, prep_col2 = st.columns(2)
     with prep_col1:
-        num_imputer = st.selectbox("Numeric Imputation Strategy", options=["median", "mean"], index=0)
+        num_imputer = st.selectbox(
+            "Numeric Imputation Strategy", options=["median", "mean"], index=0
+        )
     with prep_col2:
-        num_scaler = st.selectbox("Numeric Feature Scaling", options=["standard", "minmax", "passthrough"], index=0)
+        num_scaler = st.selectbox(
+            "Numeric Feature Scaling", options=["standard", "minmax", "passthrough"], index=0
+        )
 
     prep_config = PreprocessingConfig(
         numeric_imputer=num_imputer,
@@ -135,14 +145,19 @@ def render_experiments_page() -> None:
 
     # ── 3. Algorithm Selection ────────────────────────────────────────
     st.markdown("### 3. Algorithm Selection")
-    st.caption("Baseline model is mandatory and evaluated automatically. Select up to 4 additional algorithms to compete.")
+    st.caption(
+        "Baseline model is mandatory and evaluated automatically. Select up to 4 additional algorithms to compete."
+    )
 
     available_algos = get_algorithms_for_task(task)
     baseline_desc = get_baseline_for_task(task)
     candidate_algos = [a for a in available_algos if not a.is_baseline]
 
     st.markdown(
-        pill_html(f"Mandatory baseline included: {baseline_desc.display_name} [{baseline_desc.algorithm_id}]", "primary"),
+        pill_html(
+            f"Mandatory baseline included: {baseline_desc.display_name} [{baseline_desc.algorithm_id}]",
+            "primary",
+        ),
         unsafe_allow_html=True,
     )
 
@@ -162,10 +177,14 @@ def render_experiments_page() -> None:
     card_items = []
     for descriptor in available_algos:
         selected = descriptor.algorithm_id in selected_algo_ids
-        role_pill = pill_html("Baseline", "cyan") if descriptor.is_baseline else pill_html(
-            "Candidate", "muted"
+        role_pill = (
+            pill_html("Baseline", "cyan")
+            if descriptor.is_baseline
+            else pill_html("Candidate", "muted")
         )
-        state_pill = pill_html("Selected", "success") if selected else pill_html("Not selected", "muted")
+        state_pill = (
+            pill_html("Selected", "success") if selected else pill_html("Not selected", "muted")
+        )
         complexity_pill = pill_html(f"Complexity order {descriptor.complexity_order}", "primary")
         card_items.append(
             {
@@ -187,7 +206,11 @@ def render_experiments_page() -> None:
     )
 
     # ── Training Action ───────────────────────────────────────────────
-    if st.button("Run Supervised Cross-Validation Experiment", type="primary", disabled=len(selected_algo_ids) == 0):
+    if st.button(
+        "Run Supervised Cross-Validation Experiment",
+        type="primary",
+        disabled=len(selected_algo_ids) == 0,
+    ):
         try:
             with st.spinner("1/3 Validating modeling view and row policies..."):
                 view = experiment_service.prepare_modeling_view(
@@ -209,7 +232,9 @@ def render_experiments_page() -> None:
 
             algo_configs = [AlgorithmConfig(algorithm_id=aid) for aid in selected_algo_ids]
 
-            with st.spinner(f"3/3 Fitting {len(algo_configs) + 1} algorithms across {cv_folds} identical folds..."):
+            with st.spinner(
+                f"3/3 Fitting {len(algo_configs) + 1} algorithms across {cv_folds} identical folds..."
+            ):
                 exp_summary = experiment_service.run_supervised_experiment(
                     experiment_name=exp_name.strip() or "Experiment",
                     project_id=active_project.id,
@@ -237,7 +262,9 @@ def render_experiments_page() -> None:
     ):
         st.divider()
         st.subheader("Cross-Validation Results & Leaderboard")
-        st.caption(f"Experiment: **{latest_exp.name}** • Primary Metric: `{latest_exp.primary_metric}` • Task: `{latest_exp.task.value}`")
+        st.caption(
+            f"Experiment: **{latest_exp.name}** • Primary Metric: `{latest_exp.primary_metric}` • Task: `{latest_exp.task.value}`"
+        )
 
         st.warning(
             "**Holdout Sequestered**: In accordance with the leakage prevention protocol, "
@@ -247,28 +274,39 @@ def render_experiments_page() -> None:
         table_rows = []
         chart_data = []
         for trial in latest_exp.trials:
-            is_champ = (trial.trial_id == latest_exp.selected_trial_id)
+            is_champ = trial.trial_id == latest_exp.selected_trial_id
             cv_mean = trial.primary_cv_mean if trial.primary_cv_mean is not None else 0.0
             cv_std = trial.primary_cv_std if trial.primary_cv_std is not None else 0.0
 
-            table_rows.append({
-                "Algorithm": trial.algorithm_id + (" (Baseline)" if trial.is_baseline else ""),
-                "Status": trial.status.upper(),
-                f"CV {latest_exp.primary_metric} (Mean)": f"{cv_mean:.4f}" if trial.primary_cv_mean is not None else "N/A",
-                "Fold Std (ddof=0)": f"±{cv_std:.4f}" if trial.primary_cv_std is not None else "N/A",
-                "Fit Duration": f"{trial.fit_duration_seconds:.3f}s",
-                "Outcome": "★ CHAMPION" if is_champ else ("Baseline" if trial.is_baseline else ""),
-            })
+            table_rows.append(
+                {
+                    "Algorithm": trial.algorithm_id + (" (Baseline)" if trial.is_baseline else ""),
+                    "Status": trial.status.upper(),
+                    f"CV {latest_exp.primary_metric} (Mean)": f"{cv_mean:.4f}"
+                    if trial.primary_cv_mean is not None
+                    else "N/A",
+                    "Fold Std (ddof=0)": f"±{cv_std:.4f}"
+                    if trial.primary_cv_std is not None
+                    else "N/A",
+                    "Fit Duration": f"{trial.fit_duration_seconds:.3f}s",
+                    "Outcome": "★ CHAMPION"
+                    if is_champ
+                    else ("Baseline" if trial.is_baseline else ""),
+                }
+            )
 
             if trial.status == "completed" and trial.primary_cv_mean is not None:
-                chart_data.append({
-                    "Algorithm": trial.algorithm_id + (" (Baseline)" if trial.is_baseline else ""),
-                    "CV Score": cv_mean,
-                    "Fold Variation": cv_std,
-                    "Is Champion": "Champion" if is_champ else "Competitor",
-                })
+                chart_data.append(
+                    {
+                        "Algorithm": trial.algorithm_id
+                        + (" (Baseline)" if trial.is_baseline else ""),
+                        "CV Score": cv_mean,
+                        "Fold Variation": cv_std,
+                        "Is Champion": "Champion" if is_champ else "Competitor",
+                    }
+                )
 
-        st.dataframe(pd.DataFrame(table_rows), width='stretch', hide_index=True)
+        st.dataframe(pd.DataFrame(table_rows), width="stretch", hide_index=True)
 
         if chart_data:
             chart_df = pd.DataFrame(chart_data)
@@ -282,7 +320,7 @@ def render_experiments_page() -> None:
                 color_discrete_map={"Champion": "#10b981", "Competitor": "#6366f1"},
             )
             fig = style_plotly_figure(fig)
-            st.plotly_chart(fig, width='stretch')
+            st.plotly_chart(fig, width="stretch")
 
         st.info(f"**Selection Audit**: {latest_exp.selection_reason}")
 
@@ -311,9 +349,14 @@ def render_experiments_page() -> None:
     completed_exps = [e for e in all_experiments if e.status == "completed" and e.selected_trial_id]
 
     if not completed_exps:
-        st.info("No completed experiments with a champion model found. Run an experiment above first.")
+        st.info(
+            "No completed experiments with a champion model found. Run an experiment above first."
+        )
     else:
-        exp_options = {e.id: f"{e.name} [{e.id[:8]}] — Champion: {e.selected_trial_id[:8]}" for e in completed_exps}
+        exp_options = {
+            e.id: f"{e.name} [{e.id[:8]}] — Champion: {e.selected_trial_id[:8]}"
+            for e in completed_exps
+        }
         finalize_exp_id = st.selectbox(
             "Select Experiment to Finalize",
             options=list(exp_options.keys()),
@@ -355,23 +398,27 @@ def render_experiments_page() -> None:
     # ── Experiment History ───────────────────────────────────
     st.divider()
     st.subheader("Experiment History")
-    st.caption("All experiments for this project are persisted in SQLite and survive server restarts.")
+    st.caption(
+        "All experiments for this project are persisted in SQLite and survive server restarts."
+    )
     if all_experiments:
         history_rows = []
         for e in all_experiments:
             eval_rec = experiment_service.get_evaluation(e.id)
             finalized = "Yes" if eval_rec is not None else "—"
-            history_rows.append({
-                "ID": e.id[:8],
-                "Name": e.name,
-                "Task": e.task.value,
-                "Status": e.status,
-                "Champion": (e.selected_trial_id or "—")[:8] if e.selected_trial_id else "—",
-                "Primary Metric": e.primary_metric,
-                "Started": e.started_at[:19].replace("T", " "),
-                "Finalized": finalized,
-            })
-        st.dataframe(pd.DataFrame(history_rows), width='stretch', hide_index=True)
+            history_rows.append(
+                {
+                    "ID": e.id[:8],
+                    "Name": e.name,
+                    "Task": e.task.value,
+                    "Status": e.status,
+                    "Champion": (e.selected_trial_id or "—")[:8] if e.selected_trial_id else "—",
+                    "Primary Metric": e.primary_metric,
+                    "Started": e.started_at[:19].replace("T", " "),
+                    "Finalized": finalized,
+                }
+            )
+        st.dataframe(pd.DataFrame(history_rows), width="stretch", hide_index=True)
     else:
         st.info("No experiments yet. Run one above to begin.")
 
@@ -443,12 +490,14 @@ def _render_evaluation_results(evaluation) -> None:
     st.markdown("#### Holdout Evaluation Metrics")
     metric_rows = []
     for m in evaluation.metrics:
-        metric_rows.append({
-            "Metric": m.name,
-            "Value": f"{m.value:.6f}" if m.value is not None else "N/A",
-            "Direction": m.direction.value,
-        })
-    st.dataframe(pd.DataFrame(metric_rows), width='stretch', hide_index=True)
+        metric_rows.append(
+            {
+                "Metric": m.name,
+                "Value": f"{m.value:.6f}" if m.value is not None else "N/A",
+                "Direction": m.direction.value,
+            }
+        )
+    st.dataframe(pd.DataFrame(metric_rows), width="stretch", hide_index=True)
 
     if evaluation.confusion_matrix and evaluation.class_labels:
         st.markdown("#### Confusion Matrix")
@@ -457,4 +506,4 @@ def _render_evaluation_results(evaluation) -> None:
             index=[f"True: {c}" for c in evaluation.class_labels],
             columns=[f"Pred: {c}" for c in evaluation.class_labels],
         )
-        st.dataframe(cm_df, width='stretch')
+        st.dataframe(cm_df, width="stretch")

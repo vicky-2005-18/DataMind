@@ -143,16 +143,21 @@ DataMind
 │           ├── clustering.py     # K-Means lab, elbow curve, silhouette
 │           └── discover.py       # Algorithm cards, interactive playgrounds
 │
-├── scripts/                      # Verification & demo scripts
+├── scripts/                      # Setup, run, and verification scripts
+│   ├── setup.ps1                 # Automated setup (PowerShell)
+│   ├── run.ps1                   # Launch the app (PowerShell)
+│   ├── run.bat                   # Launch the app (Batch)
 │   ├── verify_environment.py     # Dependency & storage health check
 │   ├── smoke_demo.py             # M0/M1 service-layer smoke test
+│   └── final_verification.py    # M6 evidence measurement (timing + memory)
+│
+├── examples/                     # Example ML workflows
 │   ├── demo_m2.py                # Supervised ML end-to-end demo (Iris + regression)
 │   ├── demo_m3_mvp.py            # M3 persistence, recovery, prediction demo
 │   ├── demo_m4_export.py         # M4 export, importance, report demo
-│   ├── demo_m5.py                # M5 clustering & playground demo
-│   └── final_verification.py    # M6 evidence measurement (timing + memory)
+│   └── demo_m5.py                # M5 clustering & playground demo
 │
-├── tests/                        # Automated test suite (81 tests)
+├── tests/                        # Automated test suite
 │   ├── unit/                     # Unit tests per module
 │   ├── integration/              # Integration tests (DB, service layers)
 │   └── ui/                       # Streamlit AppTest smoke tests
@@ -196,10 +201,10 @@ git clone https://github.com/vicky-2005-18/DataMind.git
 cd DataMind
 
 # 2. Run the automated setup (creates venv, installs deps, creates .env, cleans storage)
-.\setup_datamind.ps1
+.\scripts\setup.ps1
 
 # 3. Launch the app
-.\start_datamind.ps1
+.\scripts\run.ps1
 ```
 
 Then open **http://127.0.0.1:8501** in your browser.
@@ -232,7 +237,7 @@ Copy-Item .env.example .env
 ## 🧪 Testing
 
 ```powershell
-# Run the full test suite (81 tests)
+# Run the full test suite
 .\.venv\Scripts\python.exe -m pytest -q
 
 # Run with verbose output
@@ -242,7 +247,7 @@ Copy-Item .env.example .env
 .\.venv\Scripts\python.exe -m ruff check .
 
 # Run offline M5 clustering demo
-.\.venv\Scripts\python.exe scripts\demo_m5.py
+.\.venv\Scripts\python.exe examples\demo_m5.py
 
 # Run final performance evidence measurement
 .\.venv\Scripts\python.exe scripts\final_verification.py
@@ -304,8 +309,8 @@ DataMind enforces these data science rules automatically:
 Copy `.env.example` to `.env` and adjust as needed:
 
 ```env
-# Storage root (default: ./storage)
-DATAMIND_STORAGE_ROOT=./storage
+# Storage directory (default: ./storage)
+DATAMIND_STORAGE_DIR=./storage
 
 # Max CSV upload size in bytes (default: 50 MB)
 DATAMIND_MAX_CSV_BYTES=52428800
@@ -367,8 +372,8 @@ DATAMIND_MAX_ROWS=100000
 | Document | Purpose |
 |---|---|
 | [`START_HERE.md`](START_HERE.md) | Project explanation, file index, architecture background |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Layer design, data flow, module responsibilities |
-| [`PRD.md`](PRD.md) | Product requirements, acceptance criteria (FR-01–FR-20, NFR-01–NFR-10) |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Layer design, data flow, module responsibilities |
+| [`docs/internal/PRD.md`](docs/internal/PRD.md) | Product requirements, acceptance criteria (FR-01–FR-20, NFR-01–NFR-10) |
 | [`docs/ML_SPEC.md`](docs/ML_SPEC.md) | ML correctness rules, metric definitions, leakage-prevention contract |
 | [`docs/DATA_CONTRACTS.md`](docs/DATA_CONTRACTS.md) | CSV parsing bounds, missingness rules, role logic |
 | [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md) | Full test plan (T01–T44) |

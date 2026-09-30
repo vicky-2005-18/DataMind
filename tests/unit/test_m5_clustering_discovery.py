@@ -80,7 +80,9 @@ def test_t36_k_and_silhouette_guards(migrated_db):
     from datamind.services.clustering import compute_silhouette_diagnostic
 
     points = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]])
-    value, reason, sample_size = compute_silhouette_diagnostic(points, np.zeros(3, dtype=int), seed=42)
+    value, reason, sample_size = compute_silhouette_diagnostic(
+        points, np.zeros(3, dtype=int), seed=42
+    )
     assert value is None
     assert "2 and n_rows - 1" in reason
     assert sample_size == 3
@@ -94,7 +96,9 @@ def test_t37_silhouette_uses_scaled_space_not_pca(migrated_db):
     )
     from datamind.config import get_settings
 
-    diagnostic = json.loads((get_settings().storage_dir / diagnostic_path).read_text(encoding="utf-8"))
+    diagnostic = json.loads(
+        (get_settings().storage_dir / diagnostic_path).read_text(encoding="utf-8")
+    )
     assert diagnostic["silhouette"] == result.silhouette
     trial_metric = next(
         metric for metric in result.experiment.trials[0].metrics if metric.name == "silhouette"

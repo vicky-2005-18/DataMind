@@ -78,7 +78,9 @@ def render_clustering_page() -> None:
 
     result_id = st.session_state.get("clustering_result_id")
     if not result_id:
-        st.info("Run K-Means explicitly to generate real fitted outputs. No target or accuracy metric is used.")
+        st.info(
+            "Run K-Means explicitly to generate real fitted outputs. No target or accuracy metric is used."
+        )
         return
 
     try:
@@ -92,7 +94,9 @@ def render_clustering_page() -> None:
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Inertia", f"{result.inertia:.3f}")
-    col2.metric("Silhouette", f"{result.silhouette:.3f}" if result.silhouette is not None else "N/A")
+    col2.metric(
+        "Silhouette", f"{result.silhouette:.3f}" if result.silhouette is not None else "N/A"
+    )
     col3.metric("Rows clustered", f"{sum(result.cluster_sizes.values()):,}")
     st.caption(
         "Silhouette is computed in the median-imputed, standardized modeling feature space. "
@@ -104,25 +108,36 @@ def render_clustering_page() -> None:
         st.warning(warning)
 
     sizes = pd.DataFrame(
-        [{"cluster_id": str(label), "rows": count} for label, count in sorted(result.cluster_sizes.items())]
+        [
+            {"cluster_id": str(label), "rows": count}
+            for label, count in sorted(result.cluster_sizes.items())
+        ]
     )
     st.plotly_chart(
         style_plotly_figure(
             px.bar(sizes, x="cluster_id", y="rows", title="Cluster sizes — fitted K-Means labels"),
             "Cluster sizes — fitted K-Means labels",
         ),
-        width='stretch',
+        width="stretch",
     )
 
     elbow = pd.DataFrame(result.elbow_points)
     st.plotly_chart(
         style_plotly_figure(
-            px.line(elbow, x="k", y="inertia", markers=True, title="Elbow diagnostic — standardized modeling space"),
+            px.line(
+                elbow,
+                x="k",
+                y="inertia",
+                markers=True,
+                title="Elbow diagnostic — standardized modeling space",
+            ),
             "Elbow diagnostic — standardized modeling space",
         ),
-        width='stretch',
+        width="stretch",
     )
-    st.caption("The elbow sweep is a diagnostic artifact, not multiple trials and not a guaranteed optimal-k selector.")
+    st.caption(
+        "The elbow sweep is a diagnostic artifact, not multiple trials and not a guaranteed optimal-k selector."
+    )
 
     projection = pd.DataFrame(result.pca_coordinates, columns=["PC1", "PC2"])
     projection["cluster_id"] = [str(value) for value in result.cluster_labels]
@@ -137,7 +152,7 @@ def render_clustering_page() -> None:
             ),
             "PCA display projection — visualization only",
         ),
-        width='stretch',
+        width="stretch",
     )
     variance = sum(result.pca_explained_variance)
     st.caption(

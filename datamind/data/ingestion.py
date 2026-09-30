@@ -17,7 +17,16 @@ from datamind.contracts import ErrorCode, ServiceError
 # Explicitly does not include "NA" to prevent silently coercing valid category tokens
 MISSING_TOKENS: Set[str] = {"", "nan", "NaN", "NAN", "null", "NULL", "None", "NONE"}
 
-INFINITE_TOKENS: Set[str] = {"inf", "-inf", "+inf", "infinity", "-infinity", "+infinity", "INF", "-INF"}
+INFINITE_TOKENS: Set[str] = {
+    "inf",
+    "-inf",
+    "+inf",
+    "infinity",
+    "-infinity",
+    "+infinity",
+    "INF",
+    "-INF",
+}
 
 
 class ParsedDataset(NamedTuple):
@@ -140,7 +149,11 @@ def validate_and_parse_csv(raw_bytes: bytes, filename: str = "upload.csv") -> Pa
             raise ServiceError(
                 ErrorCode.INVALID_CSV,
                 f"Malformed row at data line {row_idx}: expected {len(header)} fields, but found {len(raw_row)}.",
-                details={"row_index": row_idx, "expected_fields": len(header), "actual_fields": len(raw_row)},
+                details={
+                    "row_index": row_idx,
+                    "expected_fields": len(header),
+                    "actual_fields": len(raw_row),
+                },
             )
 
         processed_row: List[Any] = []

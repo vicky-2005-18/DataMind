@@ -33,9 +33,7 @@ def test_migration_idempotency(tmp_path: Path) -> None:
         assert rows[0]["applied_at"] is not None
 
         # Check that core tables exist
-        cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"
-        )
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;")
         tables = {row["name"] for row in cursor.fetchall()}
         expected_tables = {
             "schema_migrations",

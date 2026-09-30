@@ -57,7 +57,9 @@ def run_smoke_demo() -> int:
     print(f"   -> Duplicate rows: {profile.duplicate_row_count}")
     print(f"   -> Memory size: {profile.memory_bytes} bytes")
     for col in profile.columns:
-        print(f"      - {col.name:15} | {col.dtype:10} | Role: {col.suggested_role.value:12} | Nulls: {col.null_count}")
+        print(
+            f"      - {col.name:15} | {col.dtype:10} | Role: {col.suggested_role.value:12} | Nulls: {col.null_count}"
+        )
 
     # 5. Load raw dataframe from storage with hash verification
     print("\n5. Verifying raw file hash and loading dataframe...")

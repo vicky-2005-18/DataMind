@@ -65,10 +65,14 @@ def iris_experiment(tmp_settings):
         dataset_id=dataset.id,
         task=TaskType.CLASSIFICATION,
         target="species",
-        numeric_features=[c for c in df.columns if c != "species" and pd.api.types.is_numeric_dtype(df[c])],
+        numeric_features=[
+            c for c in df.columns if c != "species" and pd.api.types.is_numeric_dtype(df[c])
+        ],
         categorical_features=[],
     )
-    manifest = svc.prepare_split(dataset_id=dataset.id, view=view, test_fraction=0.20, cv_folds=3, random_seed=42)
+    manifest = svc.prepare_split(
+        dataset_id=dataset.id, view=view, test_fraction=0.20, cv_folds=3, random_seed=42
+    )
 
     algo_configs = [AlgorithmConfig(algorithm_id="logistic_regression")]
     summary = svc.run_supervised_experiment(
@@ -102,10 +106,14 @@ def test_t20_single_trial_failure_preserved(tmp_settings):
         dataset_id=dataset.id,
         task=TaskType.CLASSIFICATION,
         target="species",
-        numeric_features=[c for c in df.columns if c != "species" and pd.api.types.is_numeric_dtype(df[c])],
+        numeric_features=[
+            c for c in df.columns if c != "species" and pd.api.types.is_numeric_dtype(df[c])
+        ],
         categorical_features=[],
     )
-    manifest = svc.prepare_split(dataset_id=dataset.id, view=view, test_fraction=0.20, cv_folds=3, random_seed=42)
+    manifest = svc.prepare_split(
+        dataset_id=dataset.id, view=view, test_fraction=0.20, cv_folds=3, random_seed=42
+    )
 
     # Include an invalid algorithm_id to simulate a failure
     algo_configs = [
@@ -157,13 +165,20 @@ def test_t21_all_candidates_fail_experiment_failed(tmp_settings):
         dataset_id=dataset.id,
         task=TaskType.CLASSIFICATION,
         target="species",
-        numeric_features=[c for c in df.columns if c != "species" and pd.api.types.is_numeric_dtype(df[c])],
+        numeric_features=[
+            c for c in df.columns if c != "species" and pd.api.types.is_numeric_dtype(df[c])
+        ],
         categorical_features=[],
     )
-    manifest = svc.prepare_split(dataset_id=dataset.id, view=view, test_fraction=0.20, cv_folds=3, random_seed=42)
+    manifest = svc.prepare_split(
+        dataset_id=dataset.id, view=view, test_fraction=0.20, cv_folds=3, random_seed=42
+    )
 
     # Only submit algorithms that will not exist in the registry
-    algo_configs = [AlgorithmConfig(algorithm_id="bad_algo_1"), AlgorithmConfig(algorithm_id="bad_algo_2")]
+    algo_configs = [
+        AlgorithmConfig(algorithm_id="bad_algo_1"),
+        AlgorithmConfig(algorithm_id="bad_algo_2"),
+    ]
 
     summary = svc.run_supervised_experiment(
         experiment_name="T21 All Fail",
@@ -201,10 +216,14 @@ def test_t22_submit_token_idempotency(iris_experiment):
         dataset_id=dataset.id,
         task=TaskType.CLASSIFICATION,
         target="species",
-        numeric_features=[c for c in df.columns if c != "species" and pd.api.types.is_numeric_dtype(df[c])],
+        numeric_features=[
+            c for c in df.columns if c != "species" and pd.api.types.is_numeric_dtype(df[c])
+        ],
         categorical_features=[],
     )
-    manifest = svc.prepare_split(dataset_id=dataset.id, view=view, test_fraction=0.20, cv_folds=3, random_seed=42)
+    manifest = svc.prepare_split(
+        dataset_id=dataset.id, view=view, test_fraction=0.20, cv_folds=3, random_seed=42
+    )
     algo_configs = [AlgorithmConfig(algorithm_id="logistic_regression")]
 
     summary2 = svc.run_supervised_experiment(
@@ -233,10 +252,14 @@ def test_prepare_split_dedup_returns_persisted_split_id(iris_experiment):
         dataset_id=dataset.id,
         task=TaskType.CLASSIFICATION,
         target="species",
-        numeric_features=[c for c in df.columns if c != "species" and pd.api.types.is_numeric_dtype(df[c])],
+        numeric_features=[
+            c for c in df.columns if c != "species" and pd.api.types.is_numeric_dtype(df[c])
+        ],
         categorical_features=[],
     )
-    manifest2 = svc.prepare_split(dataset_id=dataset.id, view=view, test_fraction=0.20, cv_folds=3, random_seed=42)
+    manifest2 = svc.prepare_split(
+        dataset_id=dataset.id, view=view, test_fraction=0.20, cv_folds=3, random_seed=42
+    )
     assert manifest2.split_id == summary1.split_id, "Deduplicated split must reuse the persisted id"
 
     # A different experiment on the same split must persist without a FK error
@@ -258,7 +281,6 @@ def test_prepare_split_dedup_returns_persisted_split_id(iris_experiment):
 
 
 # ── T23: Crash recovery / workspace lock guard ────────────────────────────
-
 
 
 def test_t23_recovery_skips_when_lock_held(tmp_settings):
@@ -371,25 +393,40 @@ def test_t26_holdout_previously_exposed_flagged(tmp_settings):
     df = dataset_svc.load_dataframe(dataset.id)
 
     svc = ExperimentService()
-    numeric_features = [c for c in df.columns if c != "species" and pd.api.types.is_numeric_dtype(df[c])]
+    numeric_features = [
+        c for c in df.columns if c != "species" and pd.api.types.is_numeric_dtype(df[c])
+    ]
 
     # First experiment
     view1 = svc.prepare_modeling_view(
-        dataset_id=dataset.id, task=TaskType.CLASSIFICATION, target="species",
-        numeric_features=numeric_features, categorical_features=[],
+        dataset_id=dataset.id,
+        task=TaskType.CLASSIFICATION,
+        target="species",
+        numeric_features=numeric_features,
+        categorical_features=[],
     )
-    manifest = svc.prepare_split(dataset_id=dataset.id, view=view1, test_fraction=0.20, cv_folds=3, random_seed=42)
+    manifest = svc.prepare_split(
+        dataset_id=dataset.id, view=view1, test_fraction=0.20, cv_folds=3, random_seed=42
+    )
     summary1 = svc.run_supervised_experiment(
-        experiment_name="T26 Exp1", project_id=project.id, dataset_id=dataset.id,
-        view=view1, manifest=manifest,
-        algorithm_configs=[AlgorithmConfig(algorithm_id="logistic_regression")], seed=42,
+        experiment_name="T26 Exp1",
+        project_id=project.id,
+        dataset_id=dataset.id,
+        view=view1,
+        manifest=manifest,
+        algorithm_configs=[AlgorithmConfig(algorithm_id="logistic_regression")],
+        seed=42,
     )
 
     # Second experiment on the same split
     summary2 = svc.run_supervised_experiment(
-        experiment_name="T26 Exp2", project_id=project.id, dataset_id=dataset.id,
-        view=view1, manifest=manifest,
-        algorithm_configs=[AlgorithmConfig(algorithm_id="decision_tree_classifier")], seed=42,
+        experiment_name="T26 Exp2",
+        project_id=project.id,
+        dataset_id=dataset.id,
+        view=view1,
+        manifest=manifest,
+        algorithm_configs=[AlgorithmConfig(algorithm_id="decision_tree_classifier")],
+        seed=42,
     )
 
     # Finalize first → not previously exposed
@@ -414,34 +451,59 @@ def test_t27_incompatible_comparison_rejected(tmp_settings):
     dataset_svc = DatasetService()
 
     iris = dataset_svc.load_demo(project_id=project.id, demo_kind=DemoDatasetKind.IRIS)
-    regression = dataset_svc.load_demo(project_id=project.id, demo_kind=DemoDatasetKind.SYNTHETIC_REGRESSION)
+    regression = dataset_svc.load_demo(
+        project_id=project.id, demo_kind=DemoDatasetKind.SYNTHETIC_REGRESSION
+    )
 
     svc = ExperimentService()
 
     iris_df = dataset_svc.load_dataframe(iris.id)
     iris_view = svc.prepare_modeling_view(
-        dataset_id=iris.id, task=TaskType.CLASSIFICATION, target="species",
-        numeric_features=[c for c in iris_df.columns if c != "species" and pd.api.types.is_numeric_dtype(iris_df[c])],
+        dataset_id=iris.id,
+        task=TaskType.CLASSIFICATION,
+        target="species",
+        numeric_features=[
+            c
+            for c in iris_df.columns
+            if c != "species" and pd.api.types.is_numeric_dtype(iris_df[c])
+        ],
         categorical_features=[],
     )
-    iris_manifest = svc.prepare_split(dataset_id=iris.id, view=iris_view, test_fraction=0.20, cv_folds=3, random_seed=42)
+    iris_manifest = svc.prepare_split(
+        dataset_id=iris.id, view=iris_view, test_fraction=0.20, cv_folds=3, random_seed=42
+    )
     iris_exp = svc.run_supervised_experiment(
-        experiment_name="Iris Exp", project_id=project.id, dataset_id=iris.id,
-        view=iris_view, manifest=iris_manifest,
-        algorithm_configs=[AlgorithmConfig(algorithm_id="logistic_regression")], seed=42,
+        experiment_name="Iris Exp",
+        project_id=project.id,
+        dataset_id=iris.id,
+        view=iris_view,
+        manifest=iris_manifest,
+        algorithm_configs=[AlgorithmConfig(algorithm_id="logistic_regression")],
+        seed=42,
     )
 
     reg_df = dataset_svc.load_dataframe(regression.id)
-    reg_numeric = [c for c in reg_df.columns if c != "target" and pd.api.types.is_numeric_dtype(reg_df[c])]
+    reg_numeric = [
+        c for c in reg_df.columns if c != "target" and pd.api.types.is_numeric_dtype(reg_df[c])
+    ]
     reg_view = svc.prepare_modeling_view(
-        dataset_id=regression.id, task=TaskType.REGRESSION, target="target",
-        numeric_features=reg_numeric, categorical_features=[],
+        dataset_id=regression.id,
+        task=TaskType.REGRESSION,
+        target="target",
+        numeric_features=reg_numeric,
+        categorical_features=[],
     )
-    reg_manifest = svc.prepare_split(dataset_id=regression.id, view=reg_view, test_fraction=0.20, cv_folds=3, random_seed=42)
+    reg_manifest = svc.prepare_split(
+        dataset_id=regression.id, view=reg_view, test_fraction=0.20, cv_folds=3, random_seed=42
+    )
     reg_exp = svc.run_supervised_experiment(
-        experiment_name="Reg Exp", project_id=project.id, dataset_id=regression.id,
-        view=reg_view, manifest=reg_manifest,
-        algorithm_configs=[AlgorithmConfig(algorithm_id="linear_regression")], seed=42,
+        experiment_name="Reg Exp",
+        project_id=project.id,
+        dataset_id=regression.id,
+        view=reg_view,
+        manifest=reg_manifest,
+        algorithm_configs=[AlgorithmConfig(algorithm_id="linear_regression")],
+        seed=42,
     )
 
     comparison_svc = ComparisonService(experiment_service=svc)
@@ -457,10 +519,12 @@ def test_t27_incompatible_comparison_rejected(tmp_settings):
 def test_t28_reload_model_predicts_consistently(iris_experiment):
     """T28: Reloading the saved champion and predicting on training rows returns same labels."""
     import joblib
+
     svc, summary, dataset, project, df = iris_experiment
     settings = svc.split_repo.db_path.parent  # just to get tmp path
 
     from datamind.config import get_settings
+
     settings = get_settings()
 
     exp_dir = settings.experiments_dir / summary.id
@@ -495,6 +559,7 @@ def test_t29_prediction_schema_validation(iris_experiment):
     """T29: Column reorder accepted; missing/extra/invalid-numeric cases raise PREDICTION_SCHEMA_MISMATCH."""
     svc, summary, dataset, project, df = iris_experiment
     from datamind.config import get_settings
+
     settings = get_settings()
 
     with open(settings.experiments_dir / summary.id / "input_schema.json") as f:
@@ -522,7 +587,9 @@ def test_t29_prediction_schema_validation(iris_experiment):
     assert exc_info.value.code == ErrorCode.PREDICTION_SCHEMA_MISMATCH
 
     # Extra column excluded → must work
-    batch_clean = pred_svc.predict(experiment_id=summary.id, input_df=X_extra, exclude_extra_columns=True)
+    batch_clean = pred_svc.predict(
+        experiment_id=summary.id, input_df=X_extra, exclude_extra_columns=True
+    )
     assert len(batch_clean.predictions) == len(X)
 
     # Invalid numeric → must raise
@@ -562,14 +629,23 @@ def test_t30_unseen_category_prediction(tmp_settings):
 
     svc = ExperimentService()
     view = svc.prepare_modeling_view(
-        dataset_id=dataset.id, task=TaskType.CLASSIFICATION, target="label",
-        numeric_features=["size"], categorical_features=["color"],
+        dataset_id=dataset.id,
+        task=TaskType.CLASSIFICATION,
+        target="label",
+        numeric_features=["size"],
+        categorical_features=["color"],
     )
-    manifest = svc.prepare_split(dataset_id=dataset.id, view=view, test_fraction=0.20, cv_folds=3, random_seed=42)
+    manifest = svc.prepare_split(
+        dataset_id=dataset.id, view=view, test_fraction=0.20, cv_folds=3, random_seed=42
+    )
     summary = svc.run_supervised_experiment(
-        experiment_name="T30 Cat Test", project_id=project.id, dataset_id=dataset.id,
-        view=view, manifest=manifest,
-        algorithm_configs=[AlgorithmConfig(algorithm_id="logistic_regression")], seed=42,
+        experiment_name="T30 Cat Test",
+        project_id=project.id,
+        dataset_id=dataset.id,
+        view=view,
+        manifest=manifest,
+        algorithm_configs=[AlgorithmConfig(algorithm_id="logistic_regression")],
+        seed=42,
     )
 
     pred_svc = PredictionService()
@@ -586,6 +662,7 @@ def test_t31_missing_artifact_raises_model_unavailable(iris_experiment):
     """T31: If champion.joblib is missing, PredictionService raises MODEL_UNAVAILABLE."""
     svc, summary, dataset, project, df = iris_experiment
     from datamind.config import get_settings
+
     settings = get_settings()
 
     exp_dir = settings.experiments_dir / summary.id
@@ -619,6 +696,7 @@ def test_t31_corrupt_artifact_raises_model_unavailable(iris_experiment):
     """T31: A corrupt (truncated) champion.joblib raises MODEL_UNAVAILABLE cleanly."""
     svc, summary, dataset, project, df = iris_experiment
     from datamind.config import get_settings
+
     settings = get_settings()
 
     exp_dir = settings.experiments_dir / summary.id
@@ -658,11 +736,17 @@ def test_t41_cross_project_dataset_rejected(tmp_settings):
 
     svc = ExperimentService()
     view = svc.prepare_modeling_view(
-        dataset_id=dataset_a.id, task=TaskType.CLASSIFICATION, target="species",
-        numeric_features=[c for c in df.columns if c != "species" and pd.api.types.is_numeric_dtype(df[c])],
+        dataset_id=dataset_a.id,
+        task=TaskType.CLASSIFICATION,
+        target="species",
+        numeric_features=[
+            c for c in df.columns if c != "species" and pd.api.types.is_numeric_dtype(df[c])
+        ],
         categorical_features=[],
     )
-    manifest = svc.prepare_split(dataset_id=dataset_a.id, view=view, test_fraction=0.20, cv_folds=3, random_seed=42)
+    manifest = svc.prepare_split(
+        dataset_id=dataset_a.id, view=view, test_fraction=0.20, cv_folds=3, random_seed=42
+    )
 
     # Attempt to run experiment as project_b using dataset_a → must fail
     with pytest.raises(ServiceError) as exc_info:
@@ -692,7 +776,9 @@ def test_t42_orphaned_artifact_tagged(tmp_settings):
     result = recovery.reconcile()
 
     assert result["orphaned_artifacts"] >= 1
-    assert (orphan_dir / ".orphan").exists(), "Orphaned directory must be tagged with .orphan marker"
+    assert (orphan_dir / ".orphan").exists(), (
+        "Orphaned directory must be tagged with .orphan marker"
+    )
     # The champion.joblib must still exist (recovery only tags, doesn't delete)
     assert (orphan_dir / "champion.joblib").exists()
 
@@ -708,11 +794,16 @@ def test_prediction_row_limit_enforced(iris_experiment):
     pred_svc = PredictionService()
 
     from datamind.config import get_settings
+
     settings = get_settings()
-    feature_names = json.load(open(settings.experiments_dir / summary.id / "input_schema.json"))["feature_names"]
+    feature_names = json.load(open(settings.experiments_dir / summary.id / "input_schema.json"))[
+        "feature_names"
+    ]
 
     # Build oversized input
-    big_df = pd.concat([df[feature_names]] * (MAX_PREDICTION_ROWS // len(df) + 2), ignore_index=True)
+    big_df = pd.concat(
+        [df[feature_names]] * (MAX_PREDICTION_ROWS // len(df) + 2), ignore_index=True
+    )
     big_df = big_df.iloc[: MAX_PREDICTION_ROWS + 1]
 
     with pytest.raises(ServiceError) as exc_info:

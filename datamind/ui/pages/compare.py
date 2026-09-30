@@ -78,8 +78,7 @@ def render_compare_page() -> None:
         return
 
     exp_options = {
-        e.id: f"{e.name} [{e.id[:8]}] — {e.task.value} — {e.primary_metric}"
-        for e in completed_exps
+        e.id: f"{e.name} [{e.id[:8]}] — {e.task.value} — {e.primary_metric}" for e in completed_exps
     }
 
     st.markdown("### Select Experiments to Compare")
@@ -146,12 +145,12 @@ def render_compare_page() -> None:
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                     <div>
                         <span class="dm-pill dm-pill-success" style="font-weight: 800; font-size: 0.75rem;">LEADER / CHAMPION</span>
-                        <h3 style="margin: 0.35rem 0 0.15rem; color: var(--dm-text); font-size: 1.2rem;">{escape(best_row['experiment_name'])}</h3>
-                        <span style="color: var(--dm-muted); font-size: 0.85rem;">Algorithm: <strong>{escape(best_row['champion_algorithm'])}</strong></span>
+                        <h3 style="margin: 0.35rem 0 0.15rem; color: var(--dm-text); font-size: 1.2rem;">{escape(best_row["experiment_name"])}</h3>
+                        <span style="color: var(--dm-muted); font-size: 0.85rem;">Algorithm: <strong>{escape(best_row["champion_algorithm"])}</strong></span>
                     </div>
                     <div style="text-align: right;">
                         <div style="font-size: 0.75rem; color: var(--dm-muted); font-weight: 750; text-transform: uppercase;">CV MEAN ({escape(result.primary_metric)} — {direction_note})</div>
-                        <div style="font-family: var(--dm-font-mono); font-size: 1.8rem; font-weight: 800; color: var(--dm-primary);">{best_row['cv_mean']:.5f}</div>
+                        <div style="font-family: var(--dm-font-mono); font-size: 1.8rem; font-weight: 800; color: var(--dm-primary);">{best_row["cv_mean"]:.5f}</div>
                     </div>
                 </div>
             </div>
@@ -178,18 +177,20 @@ def render_compare_page() -> None:
     rank_of = {row["experiment_id"]: rank for rank, row in enumerate(ranked, start=1)}
     leaderboard_rows = []
     for row in result.table_rows:
-        leaderboard_rows.append({
-            "Rank": rank_of.get(row["experiment_id"], "—"),
-            "Experiment": f"{row['experiment_name']} [{row['experiment_id'][:8]}]",
-            "Champion Algorithm": row["champion_algorithm"],
-            "CV Mean": f"{row['cv_mean']:.6f}" if row["cv_mean"] is not None else "N/A",
-            "CV Std": f"±{row['cv_std']:.4f}" if row["cv_std"] is not None else "N/A",
-            "Trials": row["trials_count"],
-            "Total Fit (s)": f"{row['total_fit_duration']:.2f}",
-            "Started": str(row["started_at"])[:19].replace("T", " "),
-        })
+        leaderboard_rows.append(
+            {
+                "Rank": rank_of.get(row["experiment_id"], "—"),
+                "Experiment": f"{row['experiment_name']} [{row['experiment_id'][:8]}]",
+                "Champion Algorithm": row["champion_algorithm"],
+                "CV Mean": f"{row['cv_mean']:.6f}" if row["cv_mean"] is not None else "N/A",
+                "CV Std": f"±{row['cv_std']:.4f}" if row["cv_std"] is not None else "N/A",
+                "Trials": row["trials_count"],
+                "Total Fit (s)": f"{row['total_fit_duration']:.2f}",
+                "Started": str(row["started_at"])[:19].replace("T", " "),
+            }
+        )
 
-    st.dataframe(pd.DataFrame(leaderboard_rows), width='stretch', hide_index=True)
+    st.dataframe(pd.DataFrame(leaderboard_rows), width="stretch", hide_index=True)
     st.caption(
         "Ranking direction follows the primary metric: rmse and mae rank lower-is-better; all other "
         "metrics rank higher-is-better. The table remains fully sortable."
@@ -197,17 +198,21 @@ def render_compare_page() -> None:
 
     # Chart with direction-correct ordering: best run at the top
     if result.table_rows:
-        chart_df = pd.DataFrame([
-            {
-                "Experiment": f"{r['experiment_name']} [{r['experiment_id'][:8]}]",
-                "CV Mean": r["cv_mean"],
-                "CV Std": r["cv_std"] if r["cv_std"] is not None else 0.0,
-            }
-            for r in result.table_rows
-            if r["cv_mean"] is not None
-        ])
+        chart_df = pd.DataFrame(
+            [
+                {
+                    "Experiment": f"{r['experiment_name']} [{r['experiment_id'][:8]}]",
+                    "CV Mean": r["cv_mean"],
+                    "CV Std": r["cv_std"] if r["cv_std"] is not None else 0.0,
+                }
+                for r in result.table_rows
+                if r["cv_mean"] is not None
+            ]
+        )
         if not chart_df.empty:
-            chart_df = chart_df.sort_values("CV Mean", ascending=_is_minimized(result.primary_metric))
+            chart_df = chart_df.sort_values(
+                "CV Mean", ascending=_is_minimized(result.primary_metric)
+            )
             fig = px.bar(
                 chart_df,
                 x="CV Mean",
@@ -221,7 +226,7 @@ def render_compare_page() -> None:
             )
             fig = style_plotly_figure(fig)
             fig.update_layout(showlegend=False)
-            st.plotly_chart(fig, width='stretch')
+            st.plotly_chart(fig, width="stretch")
             direction_note = (
                 "lower is better" if _is_minimized(result.primary_metric) else "higher is better"
             )
@@ -237,14 +242,16 @@ def render_compare_page() -> None:
         st.markdown("### Configuration Differences")
         diff_rows = []
         for d in result.config_differences:
-            diff_rows.append({
-                "Experiment": f"{d['experiment_name']} [{d['experiment_id'][:8]}]",
-                "Algorithms": ", ".join(d.get("algorithms", [])),
-                "Seed": d.get("seed"),
-                "Imputer": d.get("prep_config", {}).get("numeric_imputer", "—"),
-                "Scaler": d.get("prep_config", {}).get("numeric_scaler", "—"),
-            })
-        st.dataframe(pd.DataFrame(diff_rows), width='stretch', hide_index=True)
+            diff_rows.append(
+                {
+                    "Experiment": f"{d['experiment_name']} [{d['experiment_id'][:8]}]",
+                    "Algorithms": ", ".join(d.get("algorithms", [])),
+                    "Seed": d.get("seed"),
+                    "Imputer": d.get("prep_config", {}).get("numeric_imputer", "—"),
+                    "Scaler": d.get("prep_config", {}).get("numeric_scaler", "—"),
+                }
+            )
+        st.dataframe(pd.DataFrame(diff_rows), width="stretch", hide_index=True)
 
     st.success(
         "All experiments above share the same dataset, task, target, and split fingerprint. "
@@ -286,9 +293,7 @@ def _render_champion_radar(experiment_service: ExperimentService, result, select
         for record in champion.metrics:
             if record.scope == MetricScope.CV_FOLD:
                 fold_counts[record.name] = fold_counts.get(record.name, 0) + 1
-        means = {
-            name: total / fold_counts.get(name, 1) for name, total in per_metric.items()
-        }
+        means = {name: total / fold_counts.get(name, 1) for name, total in per_metric.items()}
         if means:
             series[f"{experiment.name} [{experiment.id[:8]}]"] = means
 
@@ -314,7 +319,7 @@ def _render_champion_radar(experiment_service: ExperimentService, result, select
         range_r=[0.0, 1.0],
     )
     fig = style_plotly_figure(fig)
-    st.plotly_chart(fig, width='stretch')
+    st.plotly_chart(fig, width="stretch")
     st.caption(
         "Each axis is the mean of the champion trial's per-fold metric on development rows. "
         "Per-trial predicted probabilities are not persisted, so ROC overlays are unavailable "

@@ -22,7 +22,13 @@ def test_t06_iris_demo_offline() -> None:
     df = parsed.df
 
     assert len(df) == 150
-    assert set(df.columns) == {"sepal_length", "sepal_width", "petal_length", "petal_width", "species"}
+    assert set(df.columns) == {
+        "sepal_length",
+        "sepal_width",
+        "petal_length",
+        "petal_width",
+        "species",
+    }
     assert set(df["species"].unique()) == {"setosa", "versicolor", "virginica"}
     # 50 samples per class in Iris
     assert (df["species"].value_counts() == 50).all()

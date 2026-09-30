@@ -43,7 +43,9 @@ def render_explain_export_page() -> None:
         st.info("Run a successful supervised experiment before opening explanations and exports.")
         return
 
-    labels = {experiment.id: f"{experiment.name} [{experiment.id[:8]}]" for experiment in experiments}
+    labels = {
+        experiment.id: f"{experiment.name} [{experiment.id[:8]}]" for experiment in experiments
+    }
     experiment_id = st.selectbox(
         "Saved experiment",
         options=list(labels),
@@ -78,11 +80,13 @@ def render_explain_export_page() -> None:
         )
         figure.add_vline(x=0, line_color="#475569")
         figure = style_plotly_figure(figure)
-        st.plotly_chart(figure, width='stretch')
-        st.dataframe(chart, hide_index=True, width='stretch')
+        st.plotly_chart(figure, width="stretch")
+        st.dataframe(chart, hide_index=True, width="stretch")
 
         # Natural-language summary of the top driving factors
-        top_drivers = chart.reindex(chart["mean_importance"].abs().sort_values(ascending=False).index).head(3)
+        top_drivers = chart.reindex(
+            chart["mean_importance"].abs().sort_values(ascending=False).index
+        ).head(3)
         driver_phrases = []
         for _, row in top_drivers.iterrows():
             direction = "raises" if row["mean_importance"] > 0 else "lowers"
@@ -113,13 +117,17 @@ def render_explain_export_page() -> None:
         st.dataframe(
             pd.DataFrame([metric.model_dump(mode="json") for metric in evaluation.metrics]),
             hide_index=True,
-            width='stretch',
+            width="stretch",
         )
     else:
-        st.info("Holdout evaluation is not available because this experiment has not been finalized.")
+        st.info(
+            "Holdout evaluation is not available because this experiment has not been finalized."
+        )
 
     st.subheader("Evidence downloads")
-    st.caption("All files are generated from saved records. Raw training data is excluded by default.")
+    st.caption(
+        "All files are generated from saved records. Raw training data is excluded by default."
+    )
 
     report_generators = [
         ("HTML report", "generate_html_report", "text/html"),
@@ -162,7 +170,7 @@ def render_explain_export_page() -> None:
                             file_name=path.name,
                             mime=mime,
                             key=f"export_{method_name}_{experiment_id[:8]}",
-                            width='stretch',
+                            width="stretch",
                         )
                     except Exception as exc:
                         render_service_error(exc)

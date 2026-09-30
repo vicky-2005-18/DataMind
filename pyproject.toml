@@ -9,7 +9,7 @@ description = "An Interactive Machine Learning Discovery & Experimentation Platf
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
-    { name = "DataMind Team" }
+    { name = "Vikas Valvi" }
 ]
 dependencies = [
     "streamlit>=1.36.0",
@@ -30,6 +30,14 @@ dev = [
     "ruff>=0.3.0"
 ]
 
+[project.urls]
+Homepage = "https://github.com/vicky-2005-18/DataMind"
+Repository = "https://github.com/vicky-2005-18/DataMind"
+Issues = "https://github.com/vicky-2005-18/DataMind/issues"
+
+[project.scripts]
+datamind = "datamind.__main__:main"
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["datamind*"]
@@ -44,7 +52,7 @@ filterwarnings = [
 
 [tool.ruff]
 line-length = 100
-target-version = "py312"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]

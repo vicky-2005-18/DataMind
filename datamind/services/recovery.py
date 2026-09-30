@@ -20,7 +20,7 @@ class RecoveryService:
         lock_file = settings.locks_dir / "workspace.lock"
         self.lock = lock or WorkspaceLock(lock_file)
 
-    def reconcile(self, storage_root: Optional[Path] = None) -> Dict[str, int]:
+    def reconcile(self, storage_root: Optional[Path] = None) -> Dict[str, int | str]:
         """
         Reconcile workspace state after abnormal termination or on restart.
 
@@ -57,7 +57,9 @@ class RecoveryService:
                 if running_exp_ids:
                     interrupted_exps = len(running_exp_ids)
                     err_payload = json.dumps(
-                        {"error": "Interrupted by abnormal process termination; recovered on restart."}
+                        {
+                            "error": "Interrupted by abnormal process termination; recovered on restart."
+                        }
                     )
                     for exp_id in running_exp_ids:
                         conn.execute(

@@ -39,10 +39,14 @@ def render_explore_page() -> None:
 
     datasets = dataset_service.list_datasets(active_project.id)
     if not datasets:
-        st.info("No datasets available in this project. Please import or load a dataset on the Datasets page first.")
+        st.info(
+            "No datasets available in this project. Please import or load a dataset on the Datasets page first."
+        )
         return
 
-    ds_options = {d.id: f"{d.display_name} ({d.row_count:,} rows, {d.column_count} cols)" for d in datasets}
+    ds_options = {
+        d.id: f"{d.display_name} ({d.row_count:,} rows, {d.column_count} cols)" for d in datasets
+    }
     active_ds_id = st.session_state.get("active_dataset_id")
     selected_idx = 0
     if active_ds_id and active_ds_id in ds_options:
@@ -66,14 +70,20 @@ def render_explore_page() -> None:
     col_names = schema.column_names
 
     st.markdown("### 1. Modeling Protocol Setup")
-    st.caption("Confirm the prediction task, target variable, and feature roles before inspecting distributions.")
+    st.caption(
+        "Confirm the prediction task, target variable, and feature roles before inspecting distributions."
+    )
 
     col1, col2 = st.columns(2)
     with col1:
         task_choice = st.selectbox(
             "Target Task Type",
             options=[TaskType.CLASSIFICATION, TaskType.REGRESSION],
-            format_func=lambda t: "Classification (Discrete classes)" if t == TaskType.CLASSIFICATION else "Regression (Continuous value)",
+            format_func=lambda t: (
+                "Classification (Discrete classes)"
+                if t == TaskType.CLASSIFICATION
+                else "Regression (Continuous value)"
+            ),
             key="explore_task_choice",
         )
 
@@ -95,11 +105,13 @@ def render_explore_page() -> None:
     # Feature selection
     feature_candidates = [c for c in col_names if c != target_choice]
     numeric_candidates = [
-        c.name for c in schema.columns
+        c.name
+        for c in schema.columns
         if c.name in feature_candidates and c.suggested_role == ColumnRole.NUMERIC
     ]
     categorical_candidates = [
-        c.name for c in schema.columns
+        c.name
+        for c in schema.columns
         if c.name in feature_candidates and c.suggested_role != ColumnRole.NUMERIC
     ]
 
@@ -121,7 +133,9 @@ def render_explore_page() -> None:
 
     # Split parameters
     st.markdown("### 2. Leakage-Guarded Split Configuration")
-    st.caption("Holdout rows are completely sequestered. Cross-validation folds are created deterministically.")
+    st.caption(
+        "Holdout rows are completely sequestered. Cross-validation folds are created deterministically."
+    )
 
     s_col1, s_col2, s_col3 = st.columns(3)
     with s_col1:
@@ -194,7 +208,9 @@ def render_explore_page() -> None:
                 )
             st.session_state[view_key] = view
             st.session_state[split_key] = manifest
-            st.success(f"Split verified! Development set: **{len(manifest.train_row_ids):,} rows**, Holdout set: **{len(manifest.test_row_ids):,} rows** (Strictly Disjoint)")
+            st.success(
+                f"Split verified! Development set: **{len(manifest.train_row_ids):,} rows**, Holdout set: **{len(manifest.test_row_ids):,} rows** (Strictly Disjoint)"
+            )
         except ServiceError as err:
             render_service_error(err)
         except Exception as exc:
@@ -257,7 +273,9 @@ def render_explore_page() -> None:
                     "Review the histogram below before training."
                 )
             else:
-                skew_pill = pill_html(f"Target skew: {target_skew:.2f} — approximately symmetric", "success")
+                skew_pill = pill_html(
+                    f"Target skew: {target_skew:.2f} — approximately symmetric", "success"
+                )
                 skew_note = "Skewness within ±1.0 usually needs no target transformation."
             st.markdown(skew_pill, unsafe_allow_html=True)
             st.caption(f"{skew_note} Computed on development rows only.")
@@ -278,7 +296,7 @@ def render_explore_page() -> None:
             # Let Plotly use its default hover template for categorical data
             # This ensures proper legend grouping and tooltip display
             fig_target = style_plotly_figure(fig_target)
-            st.plotly_chart(fig_target, width='stretch')
+            st.plotly_chart(fig_target, width="stretch")
         else:
             fig_target = px.histogram(
                 dev_df,
@@ -293,7 +311,7 @@ def render_explore_page() -> None:
                 selector=dict(type="histogram"),
             )
             fig_target = style_plotly_figure(fig_target)
-            st.plotly_chart(fig_target, width='stretch')
+            st.plotly_chart(fig_target, width="stretch")
 
         # Feature distributions
         if view.numeric_features:
@@ -331,12 +349,14 @@ def render_explore_page() -> None:
                     selector=dict(type="scatter"),
                 )
             fig_feat = style_plotly_figure(fig_feat)
-            st.plotly_chart(fig_feat, width='stretch')
+            st.plotly_chart(fig_feat, width="stretch")
 
             # Correlation Heatmap
             if len(view.numeric_features) >= 2:
                 st.markdown("#### Numeric Features Correlation Heatmap (Development Set)")
-                st.caption("Pearson correlation coefficients computed strictly on development rows. Correlation indicates association, not causation.")
+                st.caption(
+                    "Pearson correlation coefficients computed strictly on development rows. Correlation indicates association, not causation."
+                )
                 corr_cols = view.numeric_features.copy()
                 if view.task == TaskType.REGRESSION and view.target not in corr_cols:
                     corr_cols.append(view.target)
@@ -351,7 +371,7 @@ def render_explore_page() -> None:
                     title="Correlation Matrix (Development Rows Only)",
                 )
                 fig_corr = style_plotly_figure(fig_corr)
-                st.plotly_chart(fig_corr, width='stretch')
+                st.plotly_chart(fig_corr, width="stretch")
 
                 # Collinearity auto-flagging from the same development-only matrix
                 collinear_pairs = []
@@ -376,8 +396,12 @@ def render_explore_page() -> None:
                         )
                 else:
                     st.markdown(
-                        pill_html("No feature pairs exceed |r| > 0.9 on development rows", "success"),
+                        pill_html(
+                            "No feature pairs exceed |r| > 0.9 on development rows", "success"
+                        ),
                         unsafe_allow_html=True,
                     )
 
-        st.info("Split manifest and modeling view are ready! Proceed to the **Experiment** page to train models.")
+        st.info(
+            "Split manifest and modeling view are ready! Proceed to the **Experiment** page to train models."
+        )

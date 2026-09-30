@@ -73,8 +73,10 @@ def test_t32_permutation_diagnostic_is_deterministic_and_labeled(iris_experiment
     assert [record.feature for record in first] == schema["feature_names"]
     assert all(record.n_samples == len(manifest.train_row_ids) for record in first)
 
-    report = ExportService(dataset_service, _service).generate_html_report(experiment.id).read_text(
-        encoding="utf-8"
+    report = (
+        ExportService(dataset_service, _service)
+        .generate_html_report(experiment.id)
+        .read_text(encoding="utf-8")
     )
     assert "development-set diagnostic" in report.lower()
     assert "not causal evidence" in report.lower()
