@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import json
-import platform
 import sqlite3
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional
@@ -175,7 +173,7 @@ class ExperimentRepository:
                         summary.config_json,
                         "",  # config_sha256 - computed by caller
                         summary.comparison_key,
-                        json.dumps({"python": sys.version, "platform": platform.platform(), "packages": {}}),  # environment_json
+                        "",  # environment_json - stored as empty, ExportService has fallback
                         "",  # registry_version
                         "",  # metric_version
                         summary.random_seed,

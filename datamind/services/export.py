@@ -88,7 +88,7 @@ class ExportService:
             ).fetchone()
         finally:
             conn.close()
-        if row:
+        if row and row["environment_json"]:
             return json.loads(row["environment_json"])
         return {"python": sys.version, "platform": platform.platform(), "packages": {}}
 
