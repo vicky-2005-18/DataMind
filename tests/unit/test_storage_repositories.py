@@ -1,10 +1,11 @@
 """Tests for storage/repositories.py module."""
 
 from pathlib import Path
+
 import pytest
 
 from datamind.contracts import ErrorCode, ServiceError
-from datamind.storage.repositories import ProjectRepository, DatasetRepository
+from datamind.storage.repositories import DatasetRepository, ProjectRepository
 
 
 def test_project_repository_create_and_get(migrated_db: Path) -> None:

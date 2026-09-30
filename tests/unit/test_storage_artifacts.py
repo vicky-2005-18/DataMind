@@ -1,6 +1,7 @@
 """Tests for storage/artifacts.py module."""
 
 from pathlib import Path
+
 import pytest
 
 from datamind.storage.artifacts import (

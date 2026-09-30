@@ -1,9 +1,6 @@
 """Tests for services/comparison.py module - simplified to test service logic."""
 
-from pathlib import Path
-import pytest
 
-from datamind.contracts import ErrorCode, ServiceError
 from datamind.services.comparison import ComparisonService
 
 
