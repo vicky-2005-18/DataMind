@@ -2,9 +2,9 @@
 
 from typing import Optional
 
-from datamind.contracts import ServiceError
-
 import streamlit as st
+
+from datamind.contracts import ServiceError
 
 
 def render_service_error(error: Exception) -> None:

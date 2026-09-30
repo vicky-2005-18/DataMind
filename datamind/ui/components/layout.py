@@ -3,10 +3,10 @@
 from html import escape
 from typing import Optional
 
+import streamlit as st
+
 from datamind.contracts import ProjectSummary
 from datamind.ui.components.badges import pill_html
-
-import streamlit as st
 
 
 def render_header(title: str, subtitle: str) -> None:

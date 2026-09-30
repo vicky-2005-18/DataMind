@@ -1,11 +1,11 @@
 """Card and grid components."""
 
 from html import escape
-from typing import Dict, List, Literal, Optional, Tuple
-
-from datamind.ui.components.styles import BentoSpan
+from typing import Dict, List, Optional, Tuple
 
 import streamlit as st
+
+from datamind.ui.components.styles import BentoSpan
 
 
 def render_bento_card(

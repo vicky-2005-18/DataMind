@@ -3,10 +3,10 @@
 from html import escape
 from typing import Dict, List
 
+import streamlit as st
+
 from datamind.contracts import MetricScope, TrialResult
 from datamind.ui.components.badges import pill_html
-
-import streamlit as st
 
 
 def render_split_bar(dev_count: int, holdout_count: int) -> None:

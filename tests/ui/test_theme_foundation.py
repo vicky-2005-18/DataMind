@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from datamind.ui.components.styles import GLOBAL_STYLES
 from datamind.ui.components import PILL_CLASSES, pill_html
+from datamind.ui.components.styles import GLOBAL_STYLES
 
 REQUIRED_TOKENS = (
     "--dm-canvas",

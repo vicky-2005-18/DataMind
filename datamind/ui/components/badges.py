@@ -1,7 +1,6 @@
 """Badge and pill components."""
 
 from html import escape
-from typing import Literal
 
 from datamind.ui.components.styles import PILL_CLASSES, PillVariant
 
