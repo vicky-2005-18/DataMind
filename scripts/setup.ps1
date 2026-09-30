@@ -1,5 +1,6 @@
 # DataMind Setup Script
 # This script installs all required dependencies for DataMind
+# Run from scripts/ directory
 
 Write-Host "====================================" -ForegroundColor Cyan
 Write-Host "   DataMind Setup" -ForegroundColor Cyan
@@ -40,7 +41,7 @@ Write-Host ""
 
 # Install project dependencies
 Write-Host "Installing DataMind dependencies..." -ForegroundColor Yellow
-pip install -e .
+pip install -e ..
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""
@@ -48,19 +49,19 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "   Setup Complete!" -ForegroundColor Green
     Write-Host "====================================" -ForegroundColor Green
     Write-Host ""
-    
+
     # Clean up any existing storage directory (from ZIP downloads or previous runs)
-    if (Test-Path "storage") {
+    if (Test-Path "..\storage") {
         Write-Host "Removing existing storage directory..." -ForegroundColor Yellow
-        Remove-Item -Path "storage" -Recurse -Force
+        Remove-Item -Path "..\storage" -Recurse -Force
         Write-Host "Storage directory cleaned!" -ForegroundColor Green
     }
-    
+
     # Create .env file from .env.example if it doesn't exist
-    if (-not (Test-Path ".env")) {
-        if (Test-Path ".env.example") {
+    if (-not (Test-Path "..\.env")) {
+        if (Test-Path "..\.env.example") {
             Write-Host "Creating .env file from .env.example..." -ForegroundColor Yellow
-            Copy-Item ".env.example" ".env"
+            Copy-Item "..\.env.example" "..\.env"
             Write-Host ".env file created successfully!" -ForegroundColor Green
         } else {
             Write-Host "WARNING: .env.example not found. Creating minimal .env file..." -ForegroundColor Yellow
@@ -74,16 +75,16 @@ DATAMIND_DEFAULT_SEED=42
 OMP_NUM_THREADS=1
 OPENBLAS_NUM_THREADS=1
 MKL_NUM_THREADS=1
-"@ | Out-File -FilePath ".env" -Encoding utf8
+"@ | Out-File -FilePath "..\.env" -Encoding utf8
             Write-Host "Minimal .env file created!" -ForegroundColor Green
         }
     } else {
         Write-Host ".env file already exists. Skipping creation." -ForegroundColor Green
     }
-    
+
     Write-Host ""
     Write-Host "You can now start DataMind by running:" -ForegroundColor Cyan
-    Write-Host "  .\start_datamind.ps1" -ForegroundColor White
+    Write-Host "  .\scripts\run.ps1" -ForegroundColor White
     Write-Host "  or" -ForegroundColor White
     Write-Host "  streamlit run app.py" -ForegroundColor White
     Write-Host ""

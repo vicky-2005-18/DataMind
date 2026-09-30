@@ -1,6 +1,7 @@
 @echo off
 REM DataMind Startup Script
 REM This script starts the DataMind ML Platform
+REM Run from scripts/ directory
 
 echo ====================================
 echo    DataMind ML Platform
@@ -21,19 +22,19 @@ python --version
 echo.
 
 REM Check if we're in the correct directory
-if not exist "app.py" (
-    echo ERROR: app.py not found in current directory
-    echo Please run this script from the DataMind project root directory
+if not exist "..\app.py" (
+    echo ERROR: app.py not found in parent directory
+    echo Please run this script from the scripts/ directory
     pause
     exit /b 1
 )
 
 REM Install dependencies if needed
 echo Checking dependencies...
-pip install -e . >nul 2>&1
+pip install -e .. >nul 2>&1
 if %errorlevel% neq 0 (
     echo Installing dependencies...
-    pip install -e .
+    pip install -e ..
     if %errorlevel% neq 0 (
         echo ERROR: Failed to install dependencies
         pause
@@ -50,6 +51,7 @@ echo The application will open in your default browser.
 echo Press Ctrl+C to stop the server.
 echo.
 
+cd ..
 streamlit run app.py
 
 pause
