@@ -55,7 +55,8 @@ def render_predict_page() -> None:
     # Only experiments with a persisted champion artifact are usable for prediction
     settings = get_settings()
     usable_exps = [
-        e for e in all_experiments
+        e
+        for e in all_experiments
         if e.status == "completed"
         and e.selected_trial_id
         and (settings.experiments_dir / e.id / "champion.joblib").exists()
@@ -111,7 +112,9 @@ def render_predict_page() -> None:
 
     if predict_mode == "Single Row (manual input)":
         st.markdown("#### Enter Feature Values")
-        st.caption("Fill in each feature value. Leave blank to treat as missing; the saved pipeline will impute it.")
+        st.caption(
+            "Fill in each feature value. Leave blank to treat as missing; the saved pipeline will impute it."
+        )
         row_values = {}
         with st.form("predict_single_form"):
             for feat in feature_names:
@@ -160,7 +163,7 @@ def render_predict_page() -> None:
                     raw_bytes = raw_bytes[3:]
                 input_df = pd.read_csv(io.BytesIO(raw_bytes))
                 st.success(f"Loaded {len(input_df):,} rows × {len(input_df.columns)} columns.")
-                st.dataframe(input_df.head(5), width='stretch', hide_index=True)
+                st.dataframe(input_df.head(5), width="stretch", hide_index=True)
             except Exception as exc:
                 st.error(f"Failed to read CSV: {exc}")
                 input_df = None
@@ -192,7 +195,7 @@ def render_predict_page() -> None:
                 for i, cls_name in enumerate(batch.classes):
                     result_df[f"prob_{cls_name}"] = [row[i] for row in batch.probabilities]
 
-            st.dataframe(result_df, width='stretch', hide_index=True)
+            st.dataframe(result_df, width="stretch", hide_index=True)
 
             # Single-row classification confidence readout: gauge + probability bars
             is_single_row = predict_mode == "Single Row (manual input)"
@@ -230,7 +233,7 @@ def render_predict_page() -> None:
                     },
                 )
                 gauge_fig = style_plotly_figure(go.Figure(gauge))
-                st.plotly_chart(gauge_fig, width='stretch')
+                st.plotly_chart(gauge_fig, width="stretch")
                 render_probability_bars(batch.classes, [float(p) for p in probs])
                 st.caption(
                     "Probabilities come from the persisted champion pipeline via predict_proba. "

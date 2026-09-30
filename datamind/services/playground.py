@@ -23,25 +23,34 @@ def run_classification_playground(
 ) -> PlaygroundResult:
     """Fit a classifier on seeded moons and return a bounded real decision mesh."""
     if not 100 <= sample_count <= 1000:
-        raise ServiceError(ErrorCode.INVALID_MODEL_CONFIG, "Sample count must be between 100 and 1,000.")
+        raise ServiceError(
+            ErrorCode.INVALID_MODEL_CONFIG, "Sample count must be between 100 and 1,000."
+        )
     if not 0.0 <= noise <= 0.5:
         raise ServiceError(ErrorCode.INVALID_MODEL_CONFIG, "Noise must be between 0 and 0.5.")
     if algorithm == "decision_tree":
         if not 1 <= tree_depth <= 20:
-            raise ServiceError(ErrorCode.INVALID_MODEL_CONFIG, "Tree depth must be between 1 and 20.")
+            raise ServiceError(
+                ErrorCode.INVALID_MODEL_CONFIG, "Tree depth must be between 1 and 20."
+            )
         estimator = DecisionTreeClassifier(max_depth=tree_depth, random_state=seed)
         parameters = {"tree_depth": tree_depth, "sample_count": sample_count, "noise": noise}
         explanation = "A decision tree partitions the plane into axis-aligned regions; greater depth permits finer regions."
         limitation = "Deep trees can memorize noise and produce unstable boundaries."
     elif algorithm == "knn":
         if not 1 <= n_neighbors <= 25 or n_neighbors > sample_count:
-            raise ServiceError(ErrorCode.INVALID_MODEL_CONFIG, "kNN k must be between 1 and 25 and no larger than the sample count.")
+            raise ServiceError(
+                ErrorCode.INVALID_MODEL_CONFIG,
+                "kNN k must be between 1 and 25 and no larger than the sample count.",
+            )
         estimator = KNeighborsClassifier(n_neighbors=n_neighbors)
         parameters = {"n_neighbors": n_neighbors, "sample_count": sample_count, "noise": noise}
         explanation = "kNN predicts from nearby fitted examples; larger k produces smoother local voting regions."
         limitation = "Distances are sensitive to scaling and can weaken in high dimensions."
     else:
-        raise ServiceError(ErrorCode.INVALID_MODEL_CONFIG, f"Unsupported playground algorithm: {algorithm}.")
+        raise ServiceError(
+            ErrorCode.INVALID_MODEL_CONFIG, f"Unsupported playground algorithm: {algorithm}."
+        )
 
     points, labels = make_moons(n_samples=sample_count, noise=noise, random_state=seed)
     estimator.fit(points, labels)
@@ -73,11 +82,18 @@ def run_clustering_playground(
 ) -> PlaygroundResult:
     """Fit K-Means on seeded blobs and return actual cluster assignments."""
     if not 100 <= sample_count <= 1000:
-        raise ServiceError(ErrorCode.INVALID_MODEL_CONFIG, "Sample count must be between 100 and 1,000.")
+        raise ServiceError(
+            ErrorCode.INVALID_MODEL_CONFIG, "Sample count must be between 100 and 1,000."
+        )
     if not 2 <= cluster_count <= 10 or cluster_count >= sample_count:
-        raise ServiceError(ErrorCode.INVALID_MODEL_CONFIG, "Cluster k must be between 2 and 10 and smaller than the sample count.")
+        raise ServiceError(
+            ErrorCode.INVALID_MODEL_CONFIG,
+            "Cluster k must be between 2 and 10 and smaller than the sample count.",
+        )
     if not 0.1 <= noise <= 3.0:
-        raise ServiceError(ErrorCode.INVALID_MODEL_CONFIG, "Cluster spread must be between 0.1 and 3.0.")
+        raise ServiceError(
+            ErrorCode.INVALID_MODEL_CONFIG, "Cluster spread must be between 0.1 and 3.0."
+        )
 
     points, _ = make_blobs(
         n_samples=sample_count,

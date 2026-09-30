@@ -54,10 +54,14 @@ print(f"\n[1] Created project: '{project.name}' (ID: {project.id[:8]})")
 
 dataset_svc = DatasetService()
 iris = dataset_svc.load_demo(project_id=project.id, demo_kind=DemoDatasetKind.IRIS)
-print(f"[2] Loaded demo dataset: '{iris.display_name}' ({iris.row_count} rows, {iris.column_count} cols)")
+print(
+    f"[2] Loaded demo dataset: '{iris.display_name}' ({iris.row_count} rows, {iris.column_count} cols)"
+)
 
 df = dataset_svc.load_dataframe(iris.id)
-numeric_features = [c for c in df.columns if c != "species" and pd.api.types.is_numeric_dtype(df[c])]
+numeric_features = [
+    c for c in df.columns if c != "species" and pd.api.types.is_numeric_dtype(df[c])
+]
 categorical_features = []
 
 # ── 2. Run supervised experiment ──────────────────────────────────────────
@@ -71,8 +75,12 @@ view = svc.prepare_modeling_view(
     numeric_features=numeric_features,
     categorical_features=categorical_features,
 )
-manifest = svc.prepare_split(dataset_id=iris.id, view=view, test_fraction=0.20, cv_folds=5, random_seed=42)
-print(f"\n[3] Split generated: {len(manifest.train_row_ids)} dev rows, {len(manifest.test_row_ids)} holdout rows")
+manifest = svc.prepare_split(
+    dataset_id=iris.id, view=view, test_fraction=0.20, cv_folds=5, random_seed=42
+)
+print(
+    f"\n[3] Split generated: {len(manifest.train_row_ids)} dev rows, {len(manifest.test_row_ids)} holdout rows"
+)
 
 algo_configs = [
     AlgorithmConfig(algorithm_id="logistic_regression"),
@@ -95,7 +103,9 @@ print(f"    Status: {exp.status} | Champion: {exp.selected_trial_id[:8]} | {exp.
 
 print("\n[5] Finalizing holdout evaluation...")
 eval_result = svc.finalize_experiment(exp.id)
-print(f"    Evaluation ID: {eval_result.id[:8]} | Previously exposed: {eval_result.holdout_previously_exposed}")
+print(
+    f"    Evaluation ID: {eval_result.id[:8]} | Previously exposed: {eval_result.holdout_previously_exposed}"
+)
 for m in eval_result.metrics:
     if m.fold_index == -1:
         print(f"      {m.name}: {m.value:.4f}" if m.value is not None else f"      {m.name}: N/A")
@@ -107,8 +117,10 @@ export_svc = ExportService(experiment_service=svc)
 importance_records = export_svc.compute_importance(exp.id)
 print(f"    Computed importance for {len(importance_records)} features")
 print("    Top 3 features by absolute importance:")
-for record in sorted(importance_records, key=lambda r: abs(r['mean_importance']), reverse=True)[:3]:
-    print(f"      {record['feature']}: {record['mean_importance']:.6f} ± {record['std_importance']:.6f}")
+for record in sorted(importance_records, key=lambda r: abs(r["mean_importance"]), reverse=True)[:3]:
+    print(
+        f"      {record['feature']}: {record['mean_importance']:.6f} ± {record['std_importance']:.6f}"
+    )
 
 # ── 5. Generate HTML and Markdown reports (T33) ───────────────────────────────
 
@@ -143,9 +155,9 @@ with zipfile.ZipFile(model_zip) as archive:
     print(f"    Manifest files count: {len(manifest_data['files'])}")
 
     # Verify checksums
-    for name, details in manifest_data['files'].items():
+    for name, details in manifest_data["files"].items():
         actual_hash = hashlib.sha256(archive.read(name)).hexdigest()
-        if actual_hash == details['sha256']:
+        if actual_hash == details["sha256"]:
             print(f"      [OK] {name}: checksum verified")
         else:
             print(f"      [FAIL] {name}: checksum mismatch")
@@ -166,10 +178,12 @@ with zipfile.ZipFile(exp_zip) as archive:
 
 print("\n[11] Testing safe CSV export with formula escaping...")
 
-test_df = pd.DataFrame({
-    "text": ["=1+1", "+SUM(A1:A2)", "-2+3", "@cmd", "\tformula", "\rformula", "safe"],
-    "number": [-4, 1, 2, 3, 4, 5, 6],
-})
+test_df = pd.DataFrame(
+    {
+        "text": ["=1+1", "+SUM(A1:A2)", "-2+3", "@cmd", "\tformula", "\rformula", "safe"],
+        "number": [-4, 1, 2, 3, 4, 5, 6],
+    }
+)
 batch = PredictionBatch(row_ids=list(range(7)), predictions=["ok"] * 7)
 pred_svc = PredictionService()
 csv_bytes = pred_svc.export_batch_csv(test_df, batch, "label")
@@ -180,7 +194,9 @@ actual_escaped = parsed["text"].tolist()[:6]
 if actual_escaped == expected_escaped:
     print("    [OK] T34 Formula escaping verified: spreadsheet prefixes escaped")
 else:
-    print(f"    [FAIL] T34 Formula escaping failed: expected {expected_escaped}, got {actual_escaped}")
+    print(
+        f"    [FAIL] T34 Formula escaping failed: expected {expected_escaped}, got {actual_escaped}"
+    )
 
 # ── 9. Model export/reload consistency (T33) ───────────────────────────────
 

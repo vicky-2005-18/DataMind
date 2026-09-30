@@ -1075,12 +1075,16 @@ def render_bento_grid(items: List[Dict[str, object]]) -> None:
         if span not in {"1x1", "2x1", "2x2"}:
             span = "1x1"
         hero = " dm-bento-hero" if item.get("hero") else ""
-        kicker = f'<p class="dm-bento-kicker">{item.get("kicker_html", "")}</p>' if item.get(
-            "kicker_html"
-        ) else ""
-        footer = f'<p class="dm-bento-footer">{item.get("footer_html", "")}</p>' if item.get(
-            "footer_html"
-        ) else ""
+        kicker = (
+            f'<p class="dm-bento-kicker">{item.get("kicker_html", "")}</p>'
+            if item.get("kicker_html")
+            else ""
+        )
+        footer = (
+            f'<p class="dm-bento-footer">{item.get("footer_html", "")}</p>'
+            if item.get("footer_html")
+            else ""
+        )
         # Compact single-line markup so the markdown parser keeps the whole grid as
         # one raw HTML block (indented multi-line templates degrade into code blocks).
         cards.append(
@@ -1115,11 +1119,11 @@ def render_split_bar(dev_count: int, holdout_count: int) -> None:
         f'<div><div class="dm-split-bar" role="img" '
         f'aria-label="Partition: {dev_count:,} development rows and {holdout_count:,} holdout rows">'
         f'<div class="dm-split-seg dm-split-dev" style="flex-basis: {dev_pct}%;"><span>Development</span>'
-        f'<small>{dev_count:,} · {dev_pct}%</small></div>'
+        f"<small>{dev_count:,} · {dev_pct}%</small></div>"
         f'<div class="dm-split-seg dm-split-holdout" style="flex-basis: {holdout_pct}%;"><span>Holdout</span>'
-        f'<small>{holdout_count:,} · {holdout_pct:.1f}%</small></div></div>'
+        f"<small>{holdout_count:,} · {holdout_pct:.1f}%</small></div></div>"
         f'<p class="dm-caption" style="margin: 0.4rem 0 0;">Development rows drive CV and EDA. '
-        f'Holdout rows stay untouched until finalization.</p></div>',
+        f"Holdout rows stay untouched until finalization.</p></div>",
         unsafe_allow_html=True,
     )
 
@@ -1168,7 +1172,11 @@ def render_fold_ticker(trial: TrialResult, primary_metric: str) -> None:
 
 def render_rank_medal(rank: int) -> str:
     """Return a medal badge for the top-3 ranked rows; higher ranks get a neutral pill."""
-    medals = {1: ("dm-medal-gold", "Rank 1"), 2: ("dm-medal-silver", "Rank 2"), 3: ("dm-medal-bronze", "Rank 3")}
+    medals = {
+        1: ("dm-medal-gold", "Rank 1"),
+        2: ("dm-medal-silver", "Rank 2"),
+        3: ("dm-medal-bronze", "Rank 3"),
+    }
     if rank in medals:
         css, label = medals[rank]
         return f'<span class="dm-medal {css}">{escape(label)}</span>'
@@ -1249,7 +1257,9 @@ def render_active_project_banner(project: Optional[ProjectSummary]) -> None:
             unsafe_allow_html=True,
         )
     else:
-        st.warning("**No Active Project Selected.** Please select or create a project on the **Home** page to begin.")
+        st.warning(
+            "**No Active Project Selected.** Please select or create a project on the **Home** page to begin."
+        )
 
 
 def render_empty_state(
@@ -1270,7 +1280,9 @@ def render_empty_state(
     if next_action:
         st.info(f"**Next step:** {next_action}")
     else:
-        st.caption("No mock controls or fabricated data are shown here until this milestone is implemented.")
+        st.caption(
+            "No mock controls or fabricated data are shown here until this milestone is implemented."
+        )
 
 
 def render_service_error(error: Exception) -> None:

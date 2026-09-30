@@ -29,9 +29,9 @@ def get_plotly_theme() -> go.layout.Template:
         # Margins - critical for preventing tooltip/title overlap
         margin=dict(
             t=Theme.spacing.CHART_TITLE_MARGIN_TOP,  # Top margin for title
-            l=Theme.spacing.CHART_MARGIN_LEFT,       # Left margin for axis labels
-            r=Theme.spacing.CHART_MARGIN_RIGHT,      # Right margin
-            b=Theme.spacing.CHART_MARGIN_BOTTOM,     # Bottom margin for x-axis
+            l=Theme.spacing.CHART_MARGIN_LEFT,  # Left margin for axis labels
+            r=Theme.spacing.CHART_MARGIN_RIGHT,  # Right margin
+            b=Theme.spacing.CHART_MARGIN_BOTTOM,  # Bottom margin for x-axis
         ),
         # Font settings
         font=dict(

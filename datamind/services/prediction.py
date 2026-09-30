@@ -201,7 +201,9 @@ class PredictionService:
             warnings=warnings_list,
         )
 
-    def export_batch_csv(self, input_df: pd.DataFrame, batch: PredictionBatch, target_name: str) -> bytes:
+    def export_batch_csv(
+        self, input_df: pd.DataFrame, batch: PredictionBatch, target_name: str
+    ) -> bytes:
         """Export predictions merged with input data as safe CSV bytes with formula escaping."""
         export_df = input_df.copy()
         export_df[f"predicted_{target_name}"] = batch.predictions

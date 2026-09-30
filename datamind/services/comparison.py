@@ -60,15 +60,21 @@ class ComparisonService:
 
         for other in experiments[1:]:
             if other.task != base.task:
-                mismatches.append(f"Task mismatch ({base.name}: {base.task.value} vs {other.name}: {other.task.value})")
+                mismatches.append(
+                    f"Task mismatch ({base.name}: {base.task.value} vs {other.name}: {other.task.value})"
+                )
             if other.primary_metric != base.primary_metric:
-                mismatches.append(f"Primary metric mismatch ({base.primary_metric} vs {other.primary_metric})")
+                mismatches.append(
+                    f"Primary metric mismatch ({base.primary_metric} vs {other.primary_metric})"
+                )
             if other.dataset_id != base.dataset_id:
                 mismatches.append(f"Dataset mismatch ({base.dataset_id} vs {other.dataset_id})")
 
             # Check split / comparison_key compatibility
             if other.comparison_key != base.comparison_key:
-                mismatches.append(f"Split/Cohort fingerprint mismatch between '{base.name}' and '{other.name}'")
+                mismatches.append(
+                    f"Split/Cohort fingerprint mismatch between '{base.name}' and '{other.name}'"
+                )
 
         if mismatches:
             raise ServiceError(
@@ -94,35 +100,42 @@ class ComparisonService:
             champ_algo = champ_trial.algorithm_id if champ_trial else "None"
             dur = sum(t.fit_duration_seconds for t in exp.trials)
 
-            table_rows.append({
-                "experiment_id": exp.id,
-                "experiment_name": exp.name,
-                "champion_algorithm": champ_algo,
-                "primary_metric": exp.primary_metric,
-                "cv_mean": cv_mean,
-                "cv_std": cv_std,
-                "total_fit_duration": dur,
-                "trials_count": len(exp.trials),
-                "started_at": exp.started_at,
-            })
+            table_rows.append(
+                {
+                    "experiment_id": exp.id,
+                    "experiment_name": exp.name,
+                    "champion_algorithm": champ_algo,
+                    "primary_metric": exp.primary_metric,
+                    "cv_mean": cv_mean,
+                    "cv_std": cv_std,
+                    "total_fit_duration": dur,
+                    "trials_count": len(exp.trials),
+                    "started_at": exp.started_at,
+                }
+            )
 
             try:
                 cfg = json.loads(exp.config_json)
             except Exception:
                 cfg = {}
 
-            config_diffs.append({
-                "experiment_id": exp.id,
-                "experiment_name": exp.name,
-                "prep_config": cfg.get("prep_config", {}),
-                "seed": exp.random_seed,
-                "algorithms": [a.get("algorithm_id") for a in cfg.get("algorithm_configs", [])],
-            })
+            config_diffs.append(
+                {
+                    "experiment_id": exp.id,
+                    "experiment_name": exp.name,
+                    "prep_config": cfg.get("prep_config", {}),
+                    "seed": exp.random_seed,
+                    "algorithms": [a.get("algorithm_id") for a in cfg.get("algorithm_configs", [])],
+                }
+            )
 
         # Sort table_rows by cv_mean (higher is better for classification, lower for regression)
-        reverse_sort = (base.task.value == "classification")
+        reverse_sort = base.task.value == "classification"
         table_rows.sort(
-            key=lambda r: (r["cv_mean"] is not None, r["cv_mean"] if r["cv_mean"] is not None else 0.0),
+            key=lambda r: (
+                r["cv_mean"] is not None,
+                r["cv_mean"] if r["cv_mean"] is not None else 0.0,
+            ),
             reverse=reverse_sort,
         )
 

@@ -14,7 +14,9 @@ def verify_environment() -> int:
 
     # 1. Python version check
     py_version = sys.version_info
-    print(f"Python Version: {py_version.major}.{py_version.minor}.{py_version.micro} ({platform.platform()})")
+    print(
+        f"Python Version: {py_version.major}.{py_version.minor}.{py_version.micro} ({platform.platform()})"
+    )
     if py_version < (3, 11):
         print("[-] ERROR: Python 3.11 or higher is required.")
         return 1
@@ -55,6 +57,7 @@ def verify_environment() -> int:
         import datamind
         from datamind.config import get_settings
         from datamind.storage.database import run_migrations
+
         settings = get_settings()
         print(f"[+] datamind package version: {datamind.__version__}")
         print(f"[+] storage root configured: {settings.storage_dir}")

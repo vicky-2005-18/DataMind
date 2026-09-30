@@ -41,7 +41,9 @@ def build_preprocessor(
     # Numeric pipeline
     if numeric_features:
         num_steps = []
-        imputer_strategy = config.numeric_imputer if config.numeric_imputer in ("median", "mean") else "median"
+        imputer_strategy = (
+            config.numeric_imputer if config.numeric_imputer in ("median", "mean") else "median"
+        )
         num_steps.append(
             ("imputer", SimpleImputer(strategy=imputer_strategy, keep_empty_features=True))
         )

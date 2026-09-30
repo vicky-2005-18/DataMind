@@ -12,7 +12,7 @@ def test_split_repository_missing_manifest_raises_error(migrated_db: Path) -> No
     """Test SplitRepository raises FileNotFoundError when manifest file is missing."""
     storage_dir = migrated_db.parent
     storage_dir.mkdir(exist_ok=True)
-    
+
     # Create project and dataset first for foreign key constraint
     project_repo = ProjectRepository(migrated_db)
     dataset_repo = DatasetRepository(migrated_db)
@@ -31,9 +31,9 @@ def test_split_repository_missing_manifest_raises_error(migrated_db: Path) -> No
         row_count=10,
         column_count=2,
     )
-    
+
     repo = SplitRepository(migrated_db)
-    
+
     # Create a split record pointing to a non-existent manifest
     split_id = "test-split-id"
     conn = get_connection(migrated_db)
@@ -62,7 +62,7 @@ def test_split_repository_missing_manifest_raises_error(migrated_db: Path) -> No
         conn.commit()
     finally:
         conn.close()
-    
+
     # Attempting to get the split should raise FileNotFoundError
     with pytest.raises(FileNotFoundError, match="Split manifest file not found"):
         repo.get_by_id(split_id)

@@ -56,13 +56,17 @@ def _validate_tree_params(params: Dict[str, Any]) -> None:
         raise ServiceError(ErrorCode.INVALID_MODEL_CONFIG, "max_depth must be between 1 and 20.")
     leaf = int(params.get("min_samples_leaf", 1))
     if leaf < 1 or leaf > 20:
-        raise ServiceError(ErrorCode.INVALID_MODEL_CONFIG, "min_samples_leaf must be between 1 and 20.")
+        raise ServiceError(
+            ErrorCode.INVALID_MODEL_CONFIG, "min_samples_leaf must be between 1 and 20."
+        )
 
 
 def _validate_forest_params(params: Dict[str, Any]) -> None:
     trees = int(params.get("n_estimators", 100))
     if not (50 <= trees <= 200):
-        raise ServiceError(ErrorCode.INVALID_MODEL_CONFIG, "n_estimators must be between 50 and 200.")
+        raise ServiceError(
+            ErrorCode.INVALID_MODEL_CONFIG, "n_estimators must be between 50 and 200."
+        )
     depth = params.get("max_depth", 10)
     if depth is not None and not (2 <= int(depth) <= 20):
         raise ServiceError(ErrorCode.INVALID_MODEL_CONFIG, "max_depth must be between 2 and 20.")
@@ -74,7 +78,9 @@ def _validate_knn_params(params: Dict[str, Any]) -> None:
         raise ServiceError(ErrorCode.INVALID_MODEL_CONFIG, "n_neighbors must be between 1 and 25.")
     weights = params.get("weights", "uniform")
     if weights not in ("uniform", "distance"):
-        raise ServiceError(ErrorCode.INVALID_MODEL_CONFIG, "weights must be 'uniform' or 'distance'.")
+        raise ServiceError(
+            ErrorCode.INVALID_MODEL_CONFIG, "weights must be 'uniform' or 'distance'."
+        )
 
 
 def _validate_ridge_params(params: Dict[str, Any]) -> None:
@@ -101,7 +107,9 @@ REGISTRY: Dict[str, AlgorithmDescriptor] = {
         is_baseline=False,
         complexity_order=1,
         default_params={"C": 1.0, "max_iter": 1000},
-        factory_fn=lambda p, s: LogisticRegression(C=float(p["C"]), max_iter=int(p["max_iter"]), random_state=s),
+        factory_fn=lambda p, s: LogisticRegression(
+            C=float(p["C"]), max_iter=int(p["max_iter"]), random_state=s
+        ),
         param_validator=_validate_logistic_params,
     ),
     "decision_tree_classifier": AlgorithmDescriptor(

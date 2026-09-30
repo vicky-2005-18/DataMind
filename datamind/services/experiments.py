@@ -154,7 +154,9 @@ class ExperimentService:
                 "prep_config": (prep_config or PreprocessingConfig()).model_dump(),
                 "seed": seed,
             }
-            submission_token = hashlib.sha256(json.dumps(config_payload, sort_keys=True).encode()).hexdigest()
+            submission_token = hashlib.sha256(
+                json.dumps(config_payload, sort_keys=True).encode()
+            ).hexdigest()
 
         # T22: Submit token idempotency check
         existing = self.experiment_repo.get_by_submission_token(submission_token)

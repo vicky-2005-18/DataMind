@@ -82,7 +82,9 @@ def test_dataset_workspace_empty_state(tmp_storage_dir: Path) -> None:
     assert any("No Active Project Selected" in str(item.value) for item in at.warning)
 
 
-def test_home_quick_start_demo_button_loads_dataset(tmp_storage_dir: Path, migrated_db: Path) -> None:
+def test_home_quick_start_demo_button_loads_dataset(
+    tmp_storage_dir: Path, migrated_db: Path
+) -> None:
     """Regression: Home quick-start buttons must load a demo dataset, not fail on wrong load_demo kwargs."""
     from datamind.services.datasets import DatasetService
     from datamind.services.projects import ProjectService
@@ -104,7 +106,9 @@ def test_home_quick_start_demo_button_loads_dataset(tmp_storage_dir: Path, migra
     assert len(DatasetService().list_datasets(project.id)) == 1
 
 
-def test_experiment_page_run_routes_numeric_features(tmp_storage_dir: Path, migrated_db: Path) -> None:
+def test_experiment_page_run_routes_numeric_features(
+    tmp_storage_dir: Path, migrated_db: Path
+) -> None:
     """Regression: the Experiment page must route numeric columns to the numeric pipeline.
 
     The page compared ColumnSchema.inferred_type (a raw pandas dtype string such
@@ -138,5 +142,3 @@ def test_experiment_page_run_routes_numeric_features(tmp_storage_dir: Path, migr
     assert latest.status == "completed"
     assert latest.selected_trial_id is not None
     assert any("Cross-Validation Results" in str(item.value) for item in at.subheader)
-
-

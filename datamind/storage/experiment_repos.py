@@ -364,7 +364,9 @@ class ExperimentRepository:
             primary_cv_mean = None
             primary_cv_std = None
             primary_metrics = [
-                m for m in metrics if m.scope == MetricScope.CV_MEAN and m.name == row["primary_metric"]
+                m
+                for m in metrics
+                if m.scope == MetricScope.CV_MEAN and m.name == row["primary_metric"]
             ]
             if primary_metrics:
                 primary_cv_mean = primary_metrics[0].value
@@ -379,7 +381,9 @@ class ExperimentRepository:
                     status=trial_row["status"],
                     fit_duration_seconds=trial_row["fit_duration_seconds"] or 0.0,
                     warnings=json.loads(trial_row["warnings_json"]),
-                    error=json.loads(trial_row["error_json"]).get("error") if trial_row["error_json"] else None,
+                    error=json.loads(trial_row["error_json"]).get("error")
+                    if trial_row["error_json"]
+                    else None,
                     metrics=metrics,
                     primary_cv_mean=primary_cv_mean,
                     primary_cv_std=primary_cv_std,

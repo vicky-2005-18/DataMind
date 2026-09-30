@@ -121,12 +121,18 @@ def render_discover_page() -> None:
 
         result = st.session_state.get("playground_result")
         if result is None:
-            st.info("Choose controls and click Run playground. Widget changes alone do not fit a model.")
+            st.info(
+                "Choose controls and click Run playground. Widget changes alone do not fit a model."
+            )
             return
 
         points = pd.DataFrame(result.points, columns=["x", "y"])
         points["label"] = [str(value) for value in result.labels]
-        if result.mesh_x is not None and result.mesh_y is not None and result.mesh_values is not None:
+        if (
+            result.mesh_x is not None
+            and result.mesh_y is not None
+            and result.mesh_values is not None
+        ):
             figure = go.Figure(
                 data=go.Contour(
                     x=result.mesh_x[0],
@@ -139,7 +145,9 @@ def render_discover_page() -> None:
             )
             for label in sorted(points["label"].unique()):
                 subset = points[points["label"] == label]
-                figure.add_scatter(x=subset["x"], y=subset["y"], mode="markers", name=f"Class {label}")
+                figure.add_scatter(
+                    x=subset["x"], y=subset["y"], mode="markers", name=f"Class {label}"
+                )
             figure.update_layout(title=f"Synthetic playground — {result.kind}")
             figure = style_plotly_figure(figure)
         else:
@@ -151,7 +159,9 @@ def render_discover_page() -> None:
                 title="Synthetic playground — fitted K-Means assignments",
             )
             figure = style_plotly_figure(figure)
-        st.plotly_chart(figure, width='stretch')
+        st.plotly_chart(figure, width="stretch")
         st.write(result.explanation)
         st.warning(result.limitation)
-        st.caption(f"Synthetic demonstration only • seed {result.seed} • parameters {result.parameters}")
+        st.caption(
+            f"Synthetic demonstration only • seed {result.seed} • parameters {result.parameters}"
+        )

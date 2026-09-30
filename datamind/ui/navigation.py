@@ -108,11 +108,7 @@ NAV_GROUPS = {
     "Learn": ("Clustering", "Discover"),
 }
 
-PAGE_GROUP = {
-    page: group
-    for group, group_pages in NAV_GROUPS.items()
-    for page in group_pages
-}
+PAGE_GROUP = {page: group for group, group_pages in NAV_GROUPS.items() for page in group_pages}
 
 
 def render_sidebar(pages: Dict[str, Callable[[], None]]) -> str:

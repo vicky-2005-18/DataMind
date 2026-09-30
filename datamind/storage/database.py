@@ -38,8 +38,7 @@ def run_migrations(db_path: Path) -> List[int]:
 
             # Check which migrations are already applied
             applied = {
-                row["version"]
-                for row in conn.execute("SELECT version FROM schema_migrations;")
+                row["version"] for row in conn.execute("SELECT version FROM schema_migrations;")
             }
 
             to_apply = []

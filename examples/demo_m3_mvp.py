@@ -57,10 +57,14 @@ print(f"\n[1] Created project: '{project.name}' (ID: {project.id[:8]})")
 
 dataset_svc = DatasetService()
 iris = dataset_svc.load_demo(project_id=project.id, demo_kind=DemoDatasetKind.IRIS)
-print(f"[2] Loaded demo dataset: '{iris.display_name}' ({iris.row_count} rows, {iris.column_count} cols)")
+print(
+    f"[2] Loaded demo dataset: '{iris.display_name}' ({iris.row_count} rows, {iris.column_count} cols)"
+)
 
 df = dataset_svc.load_dataframe(iris.id)
-numeric_features = [c for c in df.columns if c != "species" and pd.api.types.is_numeric_dtype(df[c])]
+numeric_features = [
+    c for c in df.columns if c != "species" and pd.api.types.is_numeric_dtype(df[c])
+]
 categorical_features = []
 
 # ── 3. Run first experiment ──────────────────────────────────────────────────
@@ -74,8 +78,12 @@ view = svc.prepare_modeling_view(
     numeric_features=numeric_features,
     categorical_features=categorical_features,
 )
-manifest = svc.prepare_split(dataset_id=iris.id, view=view, test_fraction=0.20, cv_folds=5, random_seed=42)
-print(f"\n[3] Split generated: {len(manifest.train_row_ids)} dev rows, {len(manifest.test_row_ids)} holdout rows (disjoint)")
+manifest = svc.prepare_split(
+    dataset_id=iris.id, view=view, test_fraction=0.20, cv_folds=5, random_seed=42
+)
+print(
+    f"\n[3] Split generated: {len(manifest.train_row_ids)} dev rows, {len(manifest.test_row_ids)} holdout rows (disjoint)"
+)
 
 algo_configs_1 = [
     AlgorithmConfig(algorithm_id="logistic_regression"),
@@ -92,7 +100,9 @@ exp1 = svc.run_supervised_experiment(
     algorithm_configs=algo_configs_1,
     seed=42,
 )
-print(f"    Status: {exp1.status} | Champion: {exp1.selected_trial_id[:8]} | {exp1.selection_reason}")
+print(
+    f"    Status: {exp1.status} | Champion: {exp1.selected_trial_id[:8]} | {exp1.selection_reason}"
+)
 
 # T22: Idempotency — submit same config again
 exp1_again = svc.run_supervised_experiment(
@@ -112,7 +122,9 @@ print("    [OK] T22 Idempotency verified: second submit returned same experiment
 fresh_repo = ExperimentRepository(settings.db_path)
 reloaded = fresh_repo.get_by_id(exp1.id)
 assert reloaded is not None and reloaded.id == exp1.id
-print(f"\n[5] [OK] T24 Persistence: experiment '{reloaded.name}' reloaded from SQLite after simulated restart")
+print(
+    f"\n[5] [OK] T24 Persistence: experiment '{reloaded.name}' reloaded from SQLite after simulated restart"
+)
 print(f"    Trials: {len(reloaded.trials)} | Champion trial_id: {reloaded.selected_trial_id[:8]}")
 
 # ── 5. Guarded recovery reconcile ───────────────────────────────────────────
@@ -153,8 +165,12 @@ print(f"    Status: {exp2.status} | Champion: {exp2.selected_trial_id[:8]}")
 
 print("[9] Finalizing experiment 2 on same split...")
 eval2 = svc.finalize_experiment(exp2.id)
-print(f"    WARNING: Holdout previously exposed: {eval2.holdout_previously_exposed}  (expected: True)")
-assert eval2.holdout_previously_exposed is True, "T26 FAIL: expected holdout_previously_exposed=True"
+print(
+    f"    WARNING: Holdout previously exposed: {eval2.holdout_previously_exposed}  (expected: True)"
+)
+assert eval2.holdout_previously_exposed is True, (
+    "T26 FAIL: expected holdout_previously_exposed=True"
+)
 print("    [OK] T26 Holdout exposure flag verified")
 
 # ── 8. Prediction: single row ────────────────────────────────────────────────
@@ -162,9 +178,9 @@ print("    [OK] T26 Holdout exposure flag verified")
 pred_svc = PredictionService()
 
 print("\n[10] Single-row prediction using champion of experiment 1...")
-single_row = pd.DataFrame([{
-    "sepal_length": 5.1, "sepal_width": 3.5, "petal_length": 1.4, "petal_width": 0.2
-}])
+single_row = pd.DataFrame(
+    [{"sepal_length": 5.1, "sepal_width": 3.5, "petal_length": 1.4, "petal_width": 0.2}]
+)
 pred_result = pred_svc.predict(experiment_id=exp1.id, input_df=single_row)
 print(f"     Input: {single_row.to_dict(orient='records')[0]}")
 print(f"     Predicted species: {pred_result.predictions[0]}")
@@ -204,7 +220,7 @@ try:
     comparison = comparison_svc.compare([exp1.id, exp2.id])
     print("     [OK] T27 Compatible comparison succeeded:")
     for row in comparison.table_rows:
-        cv_str = f"{row['cv_mean']:.4f}" if row['cv_mean'] is not None else "N/A"
+        cv_str = f"{row['cv_mean']:.4f}" if row["cv_mean"] is not None else "N/A"
         print(f"     [{row['experiment_id'][:8]}] {row['experiment_name'][:40]} — CV: {cv_str}")
 except ServiceError as e:
     print(f"     Comparison failed: {e.user_message}")
@@ -212,9 +228,13 @@ except ServiceError as e:
 # ── 10. Incompatible comparison (different dataset) ──────────────────────────
 
 print("\n[14] Attempting incompatible comparison (Iris vs Regression)...")
-reg_dataset = dataset_svc.load_demo(project_id=project.id, demo_kind=DemoDatasetKind.SYNTHETIC_REGRESSION)
+reg_dataset = dataset_svc.load_demo(
+    project_id=project.id, demo_kind=DemoDatasetKind.SYNTHETIC_REGRESSION
+)
 reg_df = dataset_svc.load_dataframe(reg_dataset.id)
-reg_numeric = [c for c in reg_df.columns if c != "target" and pd.api.types.is_numeric_dtype(reg_df[c])]
+reg_numeric = [
+    c for c in reg_df.columns if c != "target" and pd.api.types.is_numeric_dtype(reg_df[c])
+]
 
 reg_view = svc.prepare_modeling_view(
     dataset_id=reg_dataset.id,
@@ -223,7 +243,9 @@ reg_view = svc.prepare_modeling_view(
     numeric_features=reg_numeric,
     categorical_features=[],
 )
-reg_manifest = svc.prepare_split(dataset_id=reg_dataset.id, view=reg_view, test_fraction=0.20, cv_folds=5, random_seed=42)
+reg_manifest = svc.prepare_split(
+    dataset_id=reg_dataset.id, view=reg_view, test_fraction=0.20, cv_folds=5, random_seed=42
+)
 reg_exp = svc.run_supervised_experiment(
     experiment_name="Regression Experiment",
     project_id=project.id,
