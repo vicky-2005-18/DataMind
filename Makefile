@@ -2,6 +2,7 @@
 
 # Windows users: use PowerShell scripts in scripts/ directory instead
 # On Windows with Git Bash or WSL, these commands will work
+# On Windows CMD, use the scripts in the scripts/ folder
 
 setup:
 	pip install -e ".[dev]"
@@ -17,11 +18,15 @@ lint:
 	ruff format --check .
 
 clean:
-	rm -rf build dist *.egg-info
-	rm -rf .pytest_cache .ruff_cache
-	rm -rf .coverage htmlcov
-	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
-	find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	-python -c "import shutil, pathlib; [shutil.rmtree(p, ignore_errors=True) for p in pathlib.Path('.').rglob('*.egg-info')]"
+	-python -c "import shutil, pathlib; [shutil.rmtree(p, ignore_errors=True) for p in pathlib.Path('.').rglob('__pycache__')]"
+	-python -c "import pathlib; [p.unlink() for p in pathlib.Path('.').rglob('*.pyc')]"
+	-python -c "import shutil; shutil.rmtree('.pytest_cache', ignore_errors=True)"
+	-python -c "import shutil; shutil.rmtree('.ruff_cache', ignore_errors=True)"
+	-python -c "import shutil; shutil.rmtree('.coverage', ignore_errors=True)"
+	-python -c "import shutil; shutil.rmtree('htmlcov', ignore_errors=True)"
+	-python -c "import shutil; shutil.rmtree('build', ignore_errors=True)"
+	-python -c "import shutil; shutil.rmtree('dist', ignore_errors=True)"
 
 help:
 	@echo "Available targets:"
