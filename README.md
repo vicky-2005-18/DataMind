@@ -157,7 +157,7 @@ DataMind
 │   ├── demo_m4_export.py         # M4 export, importance, report demo
 │   └── demo_m5.py                # M5 clustering & playground demo
 │
-├── tests/                        # Automated test suite (81 tests)
+├── tests/                        # Automated test suite
 │   ├── unit/                     # Unit tests per module
 │   ├── integration/              # Integration tests (DB, service layers)
 │   └── ui/                       # Streamlit AppTest smoke tests
@@ -237,7 +237,7 @@ Copy-Item .env.example .env
 ## 🧪 Testing
 
 ```powershell
-# Run the full test suite (81 tests)
+# Run the full test suite
 .\.venv\Scripts\python.exe -m pytest -q
 
 # Run with verbose output
@@ -309,8 +309,8 @@ DataMind enforces these data science rules automatically:
 Copy `.env.example` to `.env` and adjust as needed:
 
 ```env
-# Storage root (default: ./storage)
-DATAMIND_STORAGE_ROOT=./storage
+# Storage directory (default: ./storage)
+DATAMIND_STORAGE_DIR=./storage
 
 # Max CSV upload size in bytes (default: 50 MB)
 DATAMIND_MAX_CSV_BYTES=52428800
