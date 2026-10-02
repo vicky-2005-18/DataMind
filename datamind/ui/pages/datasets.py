@@ -5,7 +5,7 @@ from __future__ import annotations
 import streamlit as st
 
 from datamind.config import get_settings
-from datamind.contracts import DatasetSummary, DemoDatasetKind, ServiceError
+from datamind.contracts import DatasetSummary, DemoDatasetKind, ErrorCode, ServiceError
 from datamind.services.datasets import DatasetService
 from datamind.ui.components import (
     pill_html,
@@ -55,15 +55,45 @@ def render_datasets_page() -> None:
         selected_idx = (
             list(ds_dict.keys()).index(current_active_id) if current_active_id in ds_dict else 0
         )
-        chosen_id = st.selectbox(
-            "Active dataset",
-            options=list(ds_dict.keys()),
-            index=selected_idx,
-            format_func=lambda dataset_id: ds_dict[dataset_id],
-            help="This dataset is used by Explore, Experiment, and Clustering.",
-        )
-        if NavigationContext.set_active_dataset(chosen_id):
-            st.rerun()
+
+        col_select, col_del = st.columns([5, 1], vertical_alignment="bottom")
+        with col_select:
+            chosen_id = st.selectbox(
+                "Active dataset",
+                options=list(ds_dict.keys()),
+                index=selected_idx,
+                format_func=lambda dataset_id: ds_dict[dataset_id],
+                help="This dataset is used by Explore, Experiment, and Clustering.",
+            )
+            if NavigationContext.set_active_dataset(chosen_id):
+                st.rerun()
+
+        with col_del:
+            if st.button("Delete", key="btn_del_active_ds", type="secondary", use_container_width=True):
+                st.session_state[f"confirm_delete_{chosen_id}"] = True
+
+        if st.session_state.get(f"confirm_delete_{chosen_id}"):
+            curr_ds = service.get_dataset(chosen_id)
+            ds_name = curr_ds.display_name if curr_ds else chosen_id
+            st.warning(f"Are you sure you want to delete dataset **{ds_name}**?")
+            c_yes, c_no, _ = st.columns([1, 1, 4])
+            with c_yes:
+                if st.button("Yes, Delete", key=f"yes_del_{chosen_id}", type="primary"):
+                    try:
+                        service.delete_dataset(chosen_id)
+                        st.session_state.pop(f"confirm_delete_{chosen_id}", None)
+                        # Pick next available dataset or None
+                        remaining = service.list_datasets(active_project.id)
+                        next_id = remaining[0].id if remaining else None
+                        NavigationContext.set_active_dataset(next_id)
+                        st.success(f"Dataset **{ds_name}** deleted.")
+                        st.rerun()
+                    except Exception as exc:
+                        st.error(f"Failed to delete dataset: {exc}")
+            with c_no:
+                if st.button("Cancel", key=f"cancel_del_{chosen_id}"):
+                    st.session_state.pop(f"confirm_delete_{chosen_id}", None)
+                    st.rerun()
     else:
         st.info("No datasets yet. Import a CSV or load an offline demo to begin.")
 
@@ -98,8 +128,15 @@ def render_datasets_page() -> None:
             help="A human-readable label for this dataset.",
         )
 
-        if st.button("Validate & Ingest Dataset", type="primary", disabled=uploaded_file is None):
+        # Disable button while an upload is already processing (prevents double-click).
+        is_uploading = st.session_state.get("_upload_processing", False)
+        if st.button(
+            "Validate & Ingest Dataset",
+            type="primary",
+            disabled=uploaded_file is None or is_uploading,
+        ):
             if uploaded_file is not None:
+                st.session_state["_upload_processing"] = True
                 try:
                     file_bytes = uploaded_file.getvalue()
                     ds_name = custom_name.strip() or uploaded_file.name
@@ -111,13 +148,26 @@ def render_datasets_page() -> None:
                         )
                     NavigationContext.set_active_dataset(new_ds.id)
                     st.success(
-                        f"Dataset **{new_ds.display_name}** ingested successfully! ({new_ds.row_count:,} rows, {new_ds.column_count} columns)"
+                        f"Dataset **{new_ds.display_name}** ingested successfully!"
+                        f" ({new_ds.row_count:,} rows, {new_ds.column_count} columns)"
                     )
                     st.rerun()
                 except ServiceError as err:
-                    render_service_error(err)
+                    if err.code == ErrorCode.DATASET_ALREADY_EXISTS:
+                        existing_name = err.details.get("existing_name", "")
+                        note = (
+                            f' (saved as **{existing_name}**)' if existing_name else ""
+                        )
+                        st.warning(
+                            f"⚠️ This dataset already exists in this project{note}. "
+                            "No new record was created."
+                        )
+                    else:
+                        render_service_error(err)
                 except Exception as exc:
                     st.error(f"Unexpected error during import: {exc}")
+                finally:
+                    st.session_state["_upload_processing"] = False
 
     # 2. TAB: Load Demo Datasets
     with tab_demos:
@@ -164,18 +214,41 @@ def render_datasets_page() -> None:
         if not project_datasets:
             st.info("No datasets loaded in this project yet. Upload a CSV or load a demo dataset.")
         else:
-            dataset_rows = [
-                {
-                    "Dataset": dataset.display_name,
-                    "Rows": dataset.row_count,
-                    "Columns": dataset.column_count,
-                    "Source": dataset.source_kind.title(),
-                    "Created": dataset.created_at[:10],
-                }
-                for dataset in project_datasets
-            ]
-            st.dataframe(dataset_rows, width="stretch", hide_index=True)
-            st.caption("Use the Active dataset selector above to inspect or work with a dataset.")
+            for ds in project_datasets:
+                with st.container(border=True):
+                    r_col1, r_col2, r_col3 = st.columns([5, 2, 1], vertical_alignment="center")
+                    with r_col1:
+                        is_active_ds = (ds.id == current_active_id)
+                        active_pill = f" {pill_html('Active', 'cyan')}" if is_active_ds else ""
+                        st.markdown(f"**{ds.display_name}**{active_pill}", unsafe_allow_html=True)
+                        st.caption(f"{ds.row_count:,} rows · {ds.column_count} columns · {ds.source_kind.title()} · {ds.created_at[:10]}")
+                    with r_col2:
+                        if not is_active_ds:
+                            if st.button("Set Active", key=f"set_active_{ds.id}", use_container_width=True):
+                                NavigationContext.set_active_dataset(ds.id)
+                                st.rerun()
+                    with r_col3:
+                        if st.button("Delete", key=f"del_row_{ds.id}", type="secondary", use_container_width=True):
+                            st.session_state[f"confirm_delete_row_{ds.id}"] = True
+
+                    if st.session_state.get(f"confirm_delete_row_{ds.id}"):
+                        st.warning(f"Delete **{ds.display_name}**?")
+                        dy, dn, _ = st.columns([1, 1, 3])
+                        with dy:
+                            if st.button("Confirm", key=f"conf_del_row_{ds.id}", type="primary"):
+                                try:
+                                    service.delete_dataset(ds.id)
+                                    st.session_state.pop(f"confirm_delete_row_{ds.id}", None)
+                                    if st.session_state.get("active_dataset_id") == ds.id:
+                                        rem = service.list_datasets(active_project.id)
+                                        NavigationContext.set_active_dataset(rem[0].id if rem else None)
+                                    st.rerun()
+                                except Exception as exc:
+                                    st.error(f"Error: {exc}")
+                        with dn:
+                            if st.button("Cancel", key=f"canc_del_row_{ds.id}"):
+                                st.session_state.pop(f"confirm_delete_row_{ds.id}", None)
+                                st.rerun()
 
     # RENDER PROFILE VIEW IF A DATASET IS ACTIVE
     active_dataset_id = st.session_state.get("active_dataset_id")

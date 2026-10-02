@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional
@@ -170,32 +171,54 @@ class DatasetRepository:
 
         conn = get_connection(self.db_path)
         try:
-            conn.execute(
-                """
-                INSERT INTO datasets (
-                    id, project_id, display_name, source_kind, source_json,
-                    raw_sha256, raw_relative_path, parser_version, parser_config_json,
-                    schema_json, profile_json, row_count, column_count, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-                """,
-                (
-                    dataset_id,
-                    project_id,
-                    display_name,
-                    source_kind,
-                    source_json,
-                    raw_sha256,
-                    raw_relative_path,
-                    parser_version,
-                    parser_config_json,
-                    schema_json,
-                    profile_json,
-                    row_count,
-                    column_count,
-                    created_at,
-                ),
-            )
-            conn.commit()
+            try:
+                conn.execute(
+                    """
+                    INSERT INTO datasets (
+                        id, project_id, display_name, source_kind, source_json,
+                        raw_sha256, raw_relative_path, parser_version, parser_config_json,
+                        schema_json, profile_json, row_count, column_count, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                    """,
+                    (
+                        dataset_id,
+                        project_id,
+                        display_name,
+                        source_kind,
+                        source_json,
+                        raw_sha256,
+                        raw_relative_path,
+                        parser_version,
+                        parser_config_json,
+                        schema_json,
+                        profile_json,
+                        row_count,
+                        column_count,
+                        created_at,
+                    ),
+                )
+                conn.commit()
+            except sqlite3.IntegrityError as exc:
+                # Catches the DB-level UNIQUE(project_id, raw_sha256) violation as a
+                # last-resort safety net against concurrent double-clicks that both
+                # passed the pre-check simultaneously.
+                # SQLite reports the error as either the index name or the column list
+                # depending on platform/version — match on both.
+                err_msg = str(exc)
+                is_dup = (
+                    "ux_datasets_project_sha256" in err_msg
+                    or (
+                        "datasets.project_id" in err_msg
+                        and "datasets.raw_sha256" in err_msg
+                    )
+                )
+                if is_dup:
+                    raise ServiceError(
+                        ErrorCode.DATASET_ALREADY_EXISTS,
+                        "This dataset already exists in this project.",
+                        details={"raw_sha256": raw_sha256},
+                    ) from exc
+                raise
 
             return DatasetSummary(
                 id=dataset_id,
@@ -216,6 +239,7 @@ class DatasetRepository:
             )
         finally:
             conn.close()
+
 
     def get_by_id(self, dataset_id: str) -> Optional[DatasetSummary]:
         """Get a dataset by ID."""
@@ -299,5 +323,58 @@ class DatasetRepository:
                 )
                 for row in rows
             ]
+        finally:
+            conn.close()
+
+    def find_by_project_and_sha256(
+        self, project_id: str, raw_sha256: str
+    ) -> Optional[DatasetSummary]:
+        """Return the active dataset matching this project and content hash, or None."""
+        conn = get_connection(self.db_path)
+        try:
+            row = conn.execute(
+                """
+                SELECT id, project_id, display_name, source_kind, source_json,
+                       raw_sha256, raw_relative_path, parser_version, parser_config_json,
+                       schema_json, profile_json, row_count, column_count, created_at, archived_at
+                FROM datasets
+                WHERE project_id = ? AND raw_sha256 = ? AND archived_at IS NULL;
+                """,
+                (project_id, raw_sha256),
+            ).fetchone()
+            if row:
+                return DatasetSummary(
+                    id=row["id"],
+                    project_id=row["project_id"],
+                    display_name=row["display_name"],
+                    source_kind=row["source_kind"],
+                    source_json=row["source_json"],
+                    raw_sha256=row["raw_sha256"],
+                    raw_relative_path=row["raw_relative_path"],
+                    parser_version=row["parser_version"],
+                    parser_config_json=row["parser_config_json"],
+                    schema_json=row["schema_json"],
+                    profile_json=row["profile_json"],
+                    row_count=row["row_count"],
+                    column_count=row["column_count"],
+                    created_at=row["created_at"],
+                    archived_at=row["archived_at"],
+                )
+            return None
+        finally:
+            conn.close()
+
+    def archive(self, dataset_id: str) -> bool:
+        """Soft-archive a dataset by setting archived_at."""
+        from datetime import datetime, timezone
+
+        conn = get_connection(self.db_path)
+        try:
+            cursor = conn.execute(
+                "UPDATE datasets SET archived_at = ? WHERE id = ? AND archived_at IS NULL;",
+                (datetime.now(timezone.utc).isoformat(), dataset_id),
+            )
+            conn.commit()
+            return cursor.rowcount > 0
         finally:
             conn.close()

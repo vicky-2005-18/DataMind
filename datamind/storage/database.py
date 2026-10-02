@@ -41,21 +41,26 @@ def run_migrations(db_path: Path) -> List[int]:
                 row["version"] for row in conn.execute("SELECT version FROM schema_migrations;")
             }
 
+            from datetime import datetime, timezone
+
             to_apply = []
             if 1 not in applied:
                 to_apply.append(1)
+            if 2 not in applied:
+                to_apply.append(2)
 
             applied_versions = []
             for version in to_apply:
                 if version == 1:
                     _apply_migration_001(conn)
-                    from datetime import datetime, timezone
+                elif version == 2:
+                    _apply_migration_002(conn)
 
-                    conn.execute(
-                        "INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?);",
-                        (version, datetime.now(timezone.utc).isoformat()),
-                    )
-                    applied_versions.append(version)
+                conn.execute(
+                    "INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?);",
+                    (version, datetime.now(timezone.utc).isoformat()),
+                )
+                applied_versions.append(version)
 
             return applied_versions
     finally:
@@ -205,3 +210,20 @@ def _apply_migration_001(conn: sqlite3.Connection) -> None:
         statement = statement.strip()
         if statement and not statement.startswith("--"):
             conn.execute(statement)
+
+
+def _apply_migration_002(conn: sqlite3.Connection) -> None:
+    """Apply migration 002: unique constraint on (project_id, raw_sha256) in datasets.
+
+    This prevents duplicate content uploads within the same project at the database
+    level. If duplicate rows already exist, the index creation will fail with an
+    IntegrityError — callers should handle that case by surfacing a report to the user
+    rather than deleting data silently.
+    """
+    conn.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS ux_datasets_project_sha256
+        ON datasets(project_id, raw_sha256)
+        WHERE archived_at IS NULL;
+        """
+    )

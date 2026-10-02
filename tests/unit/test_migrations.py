@@ -14,9 +14,9 @@ def test_migration_idempotency(tmp_path: Path) -> None:
     """T01: Initializing DB twice applies migration once without errors."""
     db_path = tmp_path / "test_datamind.sqlite3"
 
-    # First run applies migration 1
+    # First run applies migrations 1 and 2
     applied_first = run_migrations(db_path)
-    assert applied_first == [1]
+    assert applied_first == [1, 2]
 
     # Second run is an idempotent no-op
     applied_second = run_migrations(db_path)
@@ -28,9 +28,11 @@ def test_migration_idempotency(tmp_path: Path) -> None:
         cursor = conn.cursor()
         cursor.execute("SELECT version, applied_at FROM schema_migrations;")
         rows = cursor.fetchall()
-        assert len(rows) == 1
-        assert rows[0]["version"] == 1
-        assert rows[0]["applied_at"] is not None
+        assert len(rows) == 2
+        versions = {row["version"] for row in rows}
+        assert versions == {1, 2}
+        for row in rows:
+            assert row["applied_at"] is not None
 
         # Check that core tables exist
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;")
