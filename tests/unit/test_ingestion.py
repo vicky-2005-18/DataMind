@@ -71,18 +71,21 @@ def test_t03_malformed_rows_rejected() -> None:
 
 
 def test_t04_row_limit_boundary_and_rejection() -> None:
-    """T04: Table exceeding 20,000 rows must be strictly rejected without silent truncation."""
-    # Create header + 20,001 data rows
+    """T04: Table exceeding row limit must be strictly rejected without silent truncation."""
+    from datamind.config import get_settings
+
+    settings = get_settings()
+    # Create header + (settings.max_rows + 1) data rows
     buffer = io.StringIO()
     buffer.write("val\n")
-    for i in range(20001):
+    for i in range(settings.max_rows + 1):
         buffer.write(f"{i}\n")
     oversized = buffer.getvalue().encode("utf-8")
 
     with pytest.raises(ServiceError) as exc_info:
         validate_and_parse_csv(oversized)
     assert exc_info.value.code == ErrorCode.DATASET_LIMIT_EXCEEDED
-    assert "20,000 rows" in exc_info.value.user_message
+    assert f"{settings.max_rows:,} rows" in exc_info.value.user_message
 
 
 def test_t04_column_limit_rejection() -> None:

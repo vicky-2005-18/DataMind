@@ -341,7 +341,6 @@ def render_explore_page() -> None:
                     x=chosen_feat,
                     y=view.target,
                     title=f"Scatter: '{chosen_feat}' vs '{view.target}' (Development Rows)",
-                    trendline="ols",
                     color_discrete_sequence=["#6366f1"],
                 )
                 fig_feat.update_traces(
