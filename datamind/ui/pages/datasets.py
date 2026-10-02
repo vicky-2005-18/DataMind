@@ -69,7 +69,9 @@ def render_datasets_page() -> None:
                 st.rerun()
 
         with col_del:
-            if st.button("Delete", key="btn_del_active_ds", type="secondary", use_container_width=True):
+            if st.button(
+                "Delete", key="btn_del_active_ds", type="secondary", use_container_width=True
+            ):
                 st.session_state[f"confirm_delete_{chosen_id}"] = True
 
         if st.session_state.get(f"confirm_delete_{chosen_id}"):
@@ -155,9 +157,7 @@ def render_datasets_page() -> None:
                 except ServiceError as err:
                     if err.code == ErrorCode.DATASET_ALREADY_EXISTS:
                         existing_name = err.details.get("existing_name", "")
-                        note = (
-                            f' (saved as **{existing_name}**)' if existing_name else ""
-                        )
+                        note = f" (saved as **{existing_name}**)" if existing_name else ""
                         st.warning(
                             f"⚠️ This dataset already exists in this project{note}. "
                             "No new record was created."
@@ -218,17 +218,26 @@ def render_datasets_page() -> None:
                 with st.container(border=True):
                     r_col1, r_col2, r_col3 = st.columns([5, 2, 1], vertical_alignment="center")
                     with r_col1:
-                        is_active_ds = (ds.id == current_active_id)
+                        is_active_ds = ds.id == current_active_id
                         active_pill = f" {pill_html('Active', 'cyan')}" if is_active_ds else ""
                         st.markdown(f"**{ds.display_name}**{active_pill}", unsafe_allow_html=True)
-                        st.caption(f"{ds.row_count:,} rows · {ds.column_count} columns · {ds.source_kind.title()} · {ds.created_at[:10]}")
+                        st.caption(
+                            f"{ds.row_count:,} rows · {ds.column_count} columns · {ds.source_kind.title()} · {ds.created_at[:10]}"
+                        )
                     with r_col2:
                         if not is_active_ds:
-                            if st.button("Set Active", key=f"set_active_{ds.id}", use_container_width=True):
+                            if st.button(
+                                "Set Active", key=f"set_active_{ds.id}", use_container_width=True
+                            ):
                                 NavigationContext.set_active_dataset(ds.id)
                                 st.rerun()
                     with r_col3:
-                        if st.button("Delete", key=f"del_row_{ds.id}", type="secondary", use_container_width=True):
+                        if st.button(
+                            "Delete",
+                            key=f"del_row_{ds.id}",
+                            type="secondary",
+                            use_container_width=True,
+                        ):
                             st.session_state[f"confirm_delete_row_{ds.id}"] = True
 
                     if st.session_state.get(f"confirm_delete_row_{ds.id}"):
@@ -241,7 +250,9 @@ def render_datasets_page() -> None:
                                     st.session_state.pop(f"confirm_delete_row_{ds.id}", None)
                                     if st.session_state.get("active_dataset_id") == ds.id:
                                         rem = service.list_datasets(active_project.id)
-                                        NavigationContext.set_active_dataset(rem[0].id if rem else None)
+                                        NavigationContext.set_active_dataset(
+                                            rem[0].id if rem else None
+                                        )
                                     st.rerun()
                                 except Exception as exc:
                                     st.error(f"Error: {exc}")
