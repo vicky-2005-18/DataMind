@@ -193,14 +193,21 @@ DataMind
 
 > **Requires**: Windows 11, Python 3.12.x (64-bit)
 
-### Option A — Automated Setup (Recommended)
+### Quickest Start (Windows 1-Click)
+
+If you downloaded the repository as a ZIP or cloned it, you can simply run:
+- Double-click `scripts\run.bat` (or run `.\scripts\run.bat` in CMD / Terminal)
+
+It will automatically check Python, install dependencies, create the `.env` file if needed, and start DataMind in your browser.
+
+### Option A — Automated PowerShell Setup
 
 ```powershell
-# 1. Clone the repository
+# 1. Clone or download the repository
 git clone https://github.com/vicky-2005-18/DataMind.git
 cd DataMind
 
-# 2. Run the automated setup (creates venv, installs deps, creates .env, cleans storage)
+# 2. Run the automated setup
 .\scripts\setup.ps1
 
 # 3. Launch the app
