@@ -21,23 +21,38 @@ echo Python version:
 python --version
 echo.
 
-REM Check if we're in the correct directory
-if not exist "..\app.py" (
-    echo ERROR: app.py not found in parent directory
-    echo Please run this script from the scripts/ directory
+REM Determine repository root directory
+set "SCRIPT_DIR=%~dp0"
+set "ROOT_DIR=%SCRIPT_DIR%.."
+pushd "%ROOT_DIR%"
+
+REM Check if app.py exists in project root
+if not exist "app.py" (
+    echo ERROR: app.py not found in project root: %CD%
     pause
+    popd
     exit /b 1
+)
+
+REM Create .env from .env.example if missing
+if not exist ".env" (
+    if exist ".env.example" (
+        echo Creating .env configuration from .env.example...
+        copy /y ".env.example" ".env" >nul
+        echo .env file created successfully.
+    )
 )
 
 REM Install dependencies if needed
 echo Checking dependencies...
-pip install -e .. >nul 2>&1
+pip install -e . >nul 2>&1
 if %errorlevel% neq 0 (
     echo Installing dependencies...
-    pip install -e ..
+    pip install -e .
     if %errorlevel% neq 0 (
         echo ERROR: Failed to install dependencies
         pause
+        popd
         exit /b 1
     )
 )
@@ -51,7 +66,8 @@ echo The application will open in your default browser.
 echo Press Ctrl+C to stop the server.
 echo.
 
-cd ..
 python -m streamlit run app.py
 
+popd
 pause
+

@@ -10,6 +10,7 @@ Coverage:
   T-DUP-07  DB UNIQUE index rejects concurrent race-condition duplicate via IntegrityError.
   T-DUP-08  Migration 002 applied => ux_datasets_project_sha256 index exists.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -205,10 +206,11 @@ def test_db_unique_constraint_maps_to_service_error(migrated_db: Path) -> None:
     finally:
         repo.find_by_project_and_sha256 = original_find  # type: ignore[method-assign]
 
+
 def test_delete_dataset_archives_record(migrated_db):
-    proj = ProjectRepository(migrated_db).create('proj-del01')
+    proj = ProjectRepository(migrated_db).create("proj-del01")
     repo = DatasetRepository(migrated_db)
-    ds = _insert(repo, proj.id, SHA_A, 'datasets/ds1/raw.csv')
+    ds = _insert(repo, proj.id, SHA_A, "datasets/ds1/raw.csv")
     assert len(repo.list_by_project(proj.id)) == 1
     assert repo.archive(ds.id) is True
     assert len(repo.list_by_project(proj.id)) == 0

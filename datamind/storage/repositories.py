@@ -205,12 +205,8 @@ class DatasetRepository:
                 # SQLite reports the error as either the index name or the column list
                 # depending on platform/version — match on both.
                 err_msg = str(exc)
-                is_dup = (
-                    "ux_datasets_project_sha256" in err_msg
-                    or (
-                        "datasets.project_id" in err_msg
-                        and "datasets.raw_sha256" in err_msg
-                    )
+                is_dup = "ux_datasets_project_sha256" in err_msg or (
+                    "datasets.project_id" in err_msg and "datasets.raw_sha256" in err_msg
                 )
                 if is_dup:
                     raise ServiceError(
@@ -239,7 +235,6 @@ class DatasetRepository:
             )
         finally:
             conn.close()
-
 
     def get_by_id(self, dataset_id: str) -> Optional[DatasetSummary]:
         """Get a dataset by ID."""
