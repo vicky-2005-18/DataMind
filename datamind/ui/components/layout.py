@@ -10,8 +10,7 @@ from datamind.ui.components.badges import pill_html
 
 
 def render_header(title: str, subtitle: str) -> None:
-    """Render consistent page title, eyebrow, and luminous divider."""
-    st.markdown('<p class="dm-eyebrow">DataMind AI Laboratory</p>', unsafe_allow_html=True)
+    """Render consistent page title and luminous divider."""
     st.title(title, anchor=False)
     st.markdown(f'<p class="dm-page-subtitle">{escape(subtitle)}</p>', unsafe_allow_html=True)
     st.markdown('<div class="dm-rule" aria-hidden="true"></div>', unsafe_allow_html=True)
